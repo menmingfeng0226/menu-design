@@ -4,7 +4,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig({base: '/menu-master/', 
   build: {
     sourcemap: 'hidden',
   },
