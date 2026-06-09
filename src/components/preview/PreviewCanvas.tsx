@@ -28,13 +28,11 @@ const renderOriginalPrice = (priceText: string, priceStyle: any, opacity: number
     <span
       data-original-price="true"
       style={{
-        position: 'relative',
-        display: 'inline-block',
+        display: 'block',
         color: priceStyle.color,
         fontFamily: priceStyle.fontFamily,
         fontSize: priceStyle.fontSize,
         lineHeight: priceStyle.lineHeight || 1.2,
-        verticalAlign: 'baseline',
         opacity: opacity,
         padding: '0',
         margin: '0',
@@ -379,7 +377,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div className="font-medium" style={nameStyle}>{dish.name}</div>
-            <div className="flex items-baseline gap-2" style={{ gap: `${8 * optimalScale * finalScale}px` }}>
+            <div className="flex flex-col items-end" style={{ gap: `${4 * optimalScale * finalScale}px` }}>
+              <span className="font-semibold" style={priceStyle}>
+                {formatPrice(dish.price, dish.priceString, dish.unit)}
+              </span>
               {dish.originalPrice && (
                 renderOriginalPrice(
                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -387,9 +388,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                   0.6
                 )
               )}
-              <span className="font-semibold" style={priceStyle}>
-                {formatPrice(dish.price, dish.priceString, dish.unit)}
-              </span>
             </div>
           </div>
           {dish.description && (
@@ -416,7 +414,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         )}
         <div className="flex items-start justify-between mb-2" style={{ marginBottom: `${8 * optimalScale * finalScale}px` }}>
           <div className="font-medium" style={nameStyle}>{dish.name}</div>
-          <div className="flex items-baseline gap-2" style={{ gap: `${8 * optimalScale * finalScale}px` }}>
+          <div className="flex flex-col items-end" style={{ gap: `${4 * optimalScale * finalScale}px` }}>
+            <span className="font-semibold" style={priceStyle}>
+              {formatPrice(dish.price, dish.unit)}
+            </span>
             {dish.originalPrice && (
               renderOriginalPrice(
                 formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -424,9 +425,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                 0.6
               )
             )}
-            <span className="font-semibold" style={priceStyle}>
-              {formatPrice(dish.price, dish.unit)}
-            </span>
           </div>
         </div>
         {dish.description && (
@@ -460,7 +458,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
             )}
           </div>
         </div>
-        <div className="flex items-baseline gap-2" style={{ gap: `${8 * optimalScale * finalScale}px` }}>
+        <div className="flex flex-col items-end" style={{ gap: `${4 * optimalScale * finalScale}px` }}>
+          <span className="font-semibold" style={priceStyle}>
+            {formatPrice(dish.price, dish.priceString, dish.unit)}
+          </span>
           {dish.originalPrice && (
             renderOriginalPrice(
               formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -468,9 +469,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
               0.6
             )
           )}
-          <span className="font-semibold" style={priceStyle}>
-            {formatPrice(dish.price, dish.priceString, dish.unit)}
-          </span>
         </div>
       </div>
     );
@@ -518,7 +516,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="flex items-baseline gap-2 mt-1" style={{ gap: `${8 * optimalScale * finalScale}px`, marginTop: `${4 * optimalScale * finalScale}px` }}>
+                            <div className="flex flex-col items-center mt-1" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${4 * optimalScale * finalScale}px` }}>
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -526,9 +527,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-semibold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -581,7 +579,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="flex items-baseline gap-1 mt-2" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                            <div className="flex flex-col items-center mt-2" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -589,9 +590,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-semibold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -644,7 +642,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="flex items-baseline gap-2 mt-2" style={{ gap: `${8 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                            <div className="flex flex-col items-start mt-2" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -652,9 +653,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-semibold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -749,17 +747,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                     {dish.description}
                                   </div>
                                 )}
-                                <div className="flex items-baseline gap-1" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${6 * optimalScale * finalScale}px` }}>
-                                  {dish.originalPrice && (
-                              renderOriginalPrice(
-                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                priceStyle,
-                                0.6
-                              )
-                            )}
+                                <div className="flex flex-col items-center" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${6 * optimalScale * finalScale}px` }}>
                                   <span className="font-semibold" style={priceStyle}>
                                     {formatPrice(dish.price, dish.priceString, dish.unit)}
                                   </span>
+                                  {dish.originalPrice && (
+                                    renderOriginalPrice(
+                                      formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                      priceStyle,
+                                      0.6
+                                    )
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -857,27 +855,35 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                       
                       return (
                         <div key={dish.id} className="relative">
-                          <div className="flex items-end justify-between mb-1" style={{ marginBottom: `${4 * optimalScale * finalScale}px` }}>
+                          <div className="flex items-baseline justify-between mb-1" style={{ marginBottom: `${4 * optimalScale * finalScale}px` }}>
                             <div className="font-medium" style={nameStyle}>{dish.name}</div>
                             <span className="font-semibold" style={priceStyle}>
                               {formatPrice(dish.price, dish.priceString, dish.unit)}
                             </span>
                           </div>
                           <div className="absolute inset-x-0 top-3 border-t border-dashed border-gray-300" style={{ borderColor: style.textColor + '30', top: `${12 * optimalScale * finalScale}px` }}></div>
-                          {dish.description && (
-                            <div style={{ ...descStyle, marginTop: `${4 * optimalScale * finalScale}px` }} className="text-sm">
-                              {dish.description}
-                            </div>
-                          )}
-                          {dish.originalPrice && (
-                            <div className="text-right">
-                              {renderOriginalPrice(
-                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                priceStyle,
-                                0.5
-                              )}
-                            </div>
-                          )}
+                          <div className="flex items-baseline justify-between" style={{ marginTop: `${4 * optimalScale * finalScale}px` }}>
+                            {dish.description && (
+                              <div style={descStyle} className="text-sm">
+                                {dish.description}
+                              </div>
+                            )}
+                            {dish.originalPrice && (
+                              <span
+                                data-original-price="true"
+                                className="whitespace-nowrap"
+                                style={{
+                                  color: priceStyle.color,
+                                  fontFamily: priceStyle.fontFamily,
+                                  fontSize: `calc(${priceStyle.fontSize} * 0.8)`,
+                                  textDecoration: 'line-through',
+                                  opacity: 0.5,
+                                }}
+                              >
+                                {formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -925,28 +931,25 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               )}
                               <div style={{ padding: `${12 * optimalScale * finalScale}px` }}>
                                 <div className="text-center">
-                                  <div className="font-medium" style={nameStyle}>{dish.name}</div>
-                                  {dish.description && (
-                                    <div style={{ ...descStyle, marginTop: `${4 * optimalScale * finalScale}px` }} className="text-xs">
-                                      {dish.description}
-                                    </div>
-                                  )}
-                                  <div style={{ marginTop: `${8 * optimalScale * finalScale}px` }}>
-                                    {dish.originalPrice && (
-                                        <>
-                                          {renderOriginalPrice(
-                                            formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                            priceStyle,
-                                            0.6
-                                          )}
-                                          <span style={{ marginRight: `${4 * optimalScale * finalScale}px` }}></span>
-                                        </>
-                                      )}
-                                    <span className="font-semibold text-lg" style={priceStyle}>
-                                      {formatPrice(dish.price, dish.priceString, dish.unit)}
-                                    </span>
-                                  </div>
+                              <div className="font-medium" style={nameStyle}>{dish.name}</div>
+                              {dish.description && (
+                                <div style={{ ...descStyle, marginTop: `${4 * optimalScale * finalScale}px` }} className="text-xs">
+                                  {dish.description}
                                 </div>
+                              )}
+                              <div className="flex flex-col items-center" style={{ marginTop: `${8 * optimalScale * finalScale}px` }}>
+                                <span className="font-semibold text-lg" style={priceStyle}>
+                                  {formatPrice(dish.price, dish.priceString, dish.unit)}
+                                </span>
+                                {dish.originalPrice && (
+                                  renderOriginalPrice(
+                                    formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                    priceStyle,
+                                    0.6
+                                  )
+                                )}
+                              </div>
+                            </div>
                               </div>
                             </div>
                           </div>
@@ -1006,20 +1009,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div style={{ marginTop: `${8 * optimalScale * finalScale}px` }}>
-                              {dish.originalPrice && (
-                                <>
-                                  {renderOriginalPrice(
-                                    formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                    priceStyle,
-                                    0.6
-                                  )}
-                                  <span style={{ marginRight: `${4 * optimalScale * finalScale}px` }}></span>
-                                </>
-                              )}
+                            <div className="flex flex-col items-center" style={{ marginTop: `${8 * optimalScale * finalScale}px` }}>
                               <span className="font-semibold" style={priceStyle}>
                                 {formatPrice(dish.price, dish.priceString, dish.unit)}
                               </span>
+                              {dish.originalPrice && (
+                                renderOriginalPrice(
+                                  formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                  priceStyle,
+                                  0.6
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1074,7 +1074,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                     {dish.description}
                                   </div>
                                 )}
-                                <div className="flex items-baseline gap-3 mt-3" style={{ gap: `${12 * optimalScale * finalScale}px`, marginTop: `${12 * optimalScale * finalScale}px` }}>
+                                <div className="flex flex-col items-start mt-3" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${12 * optimalScale * finalScale}px` }}>
+                                  <span className="font-bold text-xl" style={{ ...priceStyle, fontSize: `${style.fontSize * 1.3 * optimalScale * finalScale}px` }}>
+                                    {formatPrice(dish.price, dish.priceString, dish.unit)}
+                                  </span>
                                   {dish.originalPrice && (
                                     renderOriginalPrice(
                                       formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -1082,9 +1085,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                       0.6
                                     )
                                   )}
-                                  <span className="font-bold text-xl" style={{ ...priceStyle, fontSize: `${style.fontSize * 1.3 * optimalScale * finalScale}px` }}>
-                                    {formatPrice(dish.price, dish.priceString, dish.unit)}
-                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -1108,19 +1108,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 </div>
                               )}
                             </div>
-                            <div style={{ marginLeft: `${12 * optimalScale * finalScale}px` }}>
-                              {dish.originalPrice && (
-                                <div style={{ display: 'block' }}>
-                                  {renderOriginalPrice(
-                                    formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                    priceStyle,
-                                    0.6
-                                  )}
-                                </div>
-                              )}
+                            <div className="flex flex-col items-end" style={{ marginLeft: `${12 * optimalScale * finalScale}px` }}>
                               <span className="font-semibold" style={priceStyle}>
                                 {formatPrice(dish.price, dish.priceString, dish.unit)}
                               </span>
+                              {dish.originalPrice && (
+                                renderOriginalPrice(
+                                  formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                  priceStyle,
+                                  0.6
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1233,7 +1231,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="mt-2" style={{ marginTop: `${8 * optimalScale * finalScale}px` }}>
+                            <div className={`flex flex-col ${isEven ? 'items-start' : 'items-end'} mt-2`} style={{ marginTop: `${8 * optimalScale * finalScale}px` }}>
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -1241,9 +1242,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-semibold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -1284,23 +1282,23 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                         <div key={dish.id} className="relative">
                           <div className="flex items-end justify-between mb-2" style={{ marginBottom: `${8 * optimalScale * finalScale}px` }}>
                             <div className="font-medium" style={nameStyle}>{dish.name}</div>
-                            <span className="font-semibold" style={priceStyle}>
-                              {formatPrice(dish.price, dish.priceString, dish.unit)}
-                            </span>
+                            <div className="flex flex-col items-end">
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
+                              {dish.originalPrice && (
+                                renderOriginalPrice(
+                                  formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                  priceStyle,
+                                  0.5
+                                )
+                              )}
+                            </div>
                           </div>
                           <div className="absolute inset-x-0 top-full border-t" style={{ borderColor: style.textColor + '20', top: `${20 * optimalScale * finalScale}px` }}></div>
                           {dish.description && (
                             <div style={{ ...descStyle, marginTop: `${8 * optimalScale * finalScale}px` }}>
                               {dish.description}
-                            </div>
-                          )}
-                          {dish.originalPrice && (
-                            <div className="mt-1" style={{ marginTop: `${4 * optimalScale * finalScale}px` }}>
-                              {renderOriginalPrice(
-                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                priceStyle,
-                                0.5
-                              )}
                             </div>
                           )}
                         </div>
@@ -1357,19 +1355,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 </div>
                               )}
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              {dish.originalPrice && (
-                                <div style={{ display: 'block' }}>
-                                  {renderOriginalPrice(
-                                    formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                    priceStyle,
-                                    0.5
-                                  )}
-                                </div>
-                              )}
+                            <div className="text-right flex-shrink-0 flex flex-col items-end">
                               <span className="font-semibold" style={priceStyle}>
                                 {formatPrice(dish.price, dish.priceString, dish.unit)}
                               </span>
+                              {dish.originalPrice && (
+                                renderOriginalPrice(
+                                  formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                  priceStyle,
+                                  0.5
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1550,7 +1546,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="flex items-baseline gap-2 mt-2" style={{ gap: `${8 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                            <div className="flex flex-col items-center mt-2" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -1558,9 +1557,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-semibold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -1644,14 +1640,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   {firstDish.description}
                                 </div>
                               )}
-                              <div className="flex items-baseline gap-3" style={{ gap: `${12 * optimalScale * finalScale}px` }}>
-                                {firstDish.originalPrice && (
-                                  renderOriginalPrice(
-                                    formatPrice(firstDish.originalPrice, firstDish.originalPriceString, firstDish.unit),
-                                    getTextStyle(firstDish.priceStyle, style.fontFamily, style.fontSize * 1.2, style.textColor, deviceConfig.scale * optimalScale, finalScale),
-                                    0.5
-                                  )
-                                )}
+                              <div className="flex flex-col items-start" style={{ gap: `${4 * optimalScale * finalScale}px` }}>
                                 <span 
                                   className="font-bold text-3xl text-amber-600"
                                   style={{
@@ -1661,6 +1650,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 >
                                   {formatPrice(firstDish.price, firstDish.priceString, firstDish.unit)}
                                 </span>
+                                {firstDish.originalPrice && (
+                                  renderOriginalPrice(
+                                    formatPrice(firstDish.originalPrice, firstDish.originalPriceString, firstDish.unit),
+                                    getTextStyle(firstDish.priceStyle, style.fontFamily, style.fontSize * 1.2, style.textColor, deviceConfig.scale * optimalScale, finalScale),
+                                    0.5
+                                  )
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1697,7 +1693,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                         {dish.description}
                                       </div>
                                     )}
-                                    <div className="flex items-baseline gap-2 mt-2" style={{ gap: `${8 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                                    <div className="flex flex-col items-start mt-2" style={{ gap: `${4 * optimalScale * finalScale}px`, marginTop: `${8 * optimalScale * finalScale}px` }}>
+                                      <span className="font-semibold" style={priceStyle}>
+                                        {formatPrice(dish.price, dish.priceString, dish.unit)}
+                                      </span>
                                       {dish.originalPrice && (
                                         renderOriginalPrice(
                                           formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -1705,9 +1704,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                           0.6
                                         )
                                       )}
-                                      <span className="font-semibold" style={priceStyle}>
-                                        {formatPrice(dish.price, dish.priceString, dish.unit)}
-                                      </span>
                                     </div>
                                   </div>
                                 </div>
@@ -1826,7 +1822,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 </div>
                               )}
                             </div>
-                            <div className="ml-2" style={{ marginLeft: `${8 * optimalScale * finalScale}px` }}>
+                            <div className="flex flex-col items-end" style={{ marginLeft: `${8 * optimalScale * finalScale}px` }}>
+                              <span className="font-bold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -1834,9 +1833,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.5
                                 )
                               )}
-                              <span className="font-bold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -1944,27 +1940,35 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {renderDishImage(dish)}
                               </div>
                             )}
-                            <div className="flex-1 flex flex-col justify-center" style={{ textAlign: textAlign as any }}>
-                              <div className="flex items-center justify-between" style={{ flexDirection: textAlign === 'right' ? 'row-reverse' : 'row' }}>
+                            <div className="flex-1" style={{ textAlign: textAlign as any }}>
+                              <div className="flex justify-between items-baseline" style={{ flexDirection: textAlign === 'right' ? 'row-reverse' : 'row' }}>
                                 <div className="font-medium" style={nameStyle}>{dish.name}</div>
-                                <div className="flex items-baseline gap-2" style={{ gap: `${8 * optimalScale * finalScale}px` }}>
-                                  {dish.originalPrice && (
-                                    renderOriginalPrice(
-                                      formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                      priceStyle,
-                                      0.6
-                                    )
-                                  )}
-                                  <span className="font-semibold" style={priceStyle}>
-                                    {formatPrice(dish.price, dish.priceString, dish.unit)}
-                                  </span>
-                                </div>
+                                <span className="font-semibold whitespace-nowrap" style={priceStyle}>
+                                  {formatPrice(dish.price, dish.priceString, dish.unit)}
+                                </span>
                               </div>
-                              {dish.description && (
-                                <div style={descStyle}>
-                                  {dish.description}
-                                </div>
-                              )}
+                              <div className="flex justify-between items-baseline" style={{ flexDirection: textAlign === 'right' ? 'row-reverse' : 'row', marginTop: `${4 * optimalScale * finalScale}px` }}>
+                                {dish.description && (
+                                  <div style={descStyle}>
+                                    {dish.description}
+                                  </div>
+                                )}
+                                {dish.originalPrice && (
+                                  <span
+                                    data-original-price="true"
+                                    className="whitespace-nowrap"
+                                    style={{
+                                      color: priceStyle.color,
+                                      fontFamily: priceStyle.fontFamily,
+                                      fontSize: `calc(${priceStyle.fontSize} * 0.8)`,
+                                      textDecoration: 'line-through',
+                                      opacity: 0.6,
+                                    }}
+                                  >
+                                    {formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
@@ -2050,28 +2054,36 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                         </div>
                       )}
                       <div className="flex-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex justify-between items-baseline">
                           <div className="font-medium" style={nameStyle}>
                             {dish.name}
                           </div>
-                          <div className="flex items-baseline gap-2" style={{ gap: '8px' }}>
-                            {dish.originalPrice && (
-                              renderOriginalPrice(
-                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                priceStyle,
-                                0.6
-                              )
-                            )}
-                            <span className="font-semibold" style={priceStyle}>
-                              {formatPrice(dish.price, dish.priceString, dish.unit)}
-                            </span>
-                          </div>
+                          <span className="font-semibold whitespace-nowrap" style={priceStyle}>
+                            {formatPrice(dish.price, dish.priceString, dish.unit)}
+                          </span>
                         </div>
-                        {dish.description && (
-                          <div style={descStyle}>
-                            {dish.description}
-                          </div>
-                        )}
+                        <div className="flex justify-between items-baseline" style={{ marginTop: '4px' }}>
+                          {dish.description && (
+                            <div style={descStyle}>
+                              {dish.description}
+                            </div>
+                          )}
+                          {dish.originalPrice && (
+                            <span
+                              data-original-price="true"
+                              className="whitespace-nowrap"
+                              style={{
+                                color: priceStyle.color,
+                                fontFamily: priceStyle.fontFamily,
+                                fontSize: `calc(${priceStyle.fontSize} * 0.8)`,
+                                textDecoration: 'line-through',
+                                opacity: 0.6,
+                              }}
+                            >
+                              {formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -2132,7 +2144,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             {dish.description}
                           </div>
                         )}
-                        <div className="flex items-baseline gap-2 mt-1" style={{ gap: '8px', marginTop: '4px' }}>
+                        <div className="flex flex-col items-center mt-1" style={{ gap: '4px', marginTop: '4px' }}>
+                          <span className="font-semibold" style={priceStyle}>
+                            {formatPrice(dish.price, dish.priceString, dish.unit)}
+                          </span>
                           {dish.originalPrice && (
                             renderOriginalPrice(
                               formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2140,9 +2155,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               0.6
                             )
                           )}
-                          <span className="font-semibold" style={priceStyle}>
-                            {formatPrice(dish.price, dish.priceString, dish.unit)}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -2204,7 +2216,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             {dish.description}
                           </div>
                         )}
-                        <div className="flex items-baseline gap-1 mt-2" style={{ gap: '4px', marginTop: '8px' }}>
+                        <div className="flex flex-col items-center mt-2" style={{ gap: '4px', marginTop: '8px' }}>
+                          <span className="font-semibold" style={priceStyle}>
+                            {formatPrice(dish.price, dish.priceString, dish.unit)}
+                          </span>
                           {dish.originalPrice && (
                             renderOriginalPrice(
                               formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2212,9 +2227,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               0.6
                             )
                           )}
-                          <span className="font-semibold" style={priceStyle}>
-                            {formatPrice(dish.price, dish.priceString, dish.unit)}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -2350,7 +2362,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               {dish.description}
                             </div>
                           )}
-                          <div className="flex items-baseline gap-2 mt-2" style={{ gap: '8px', marginTop: '8px' }}>
+                          <div className="flex flex-col items-center mt-2" style={{ gap: '4px', marginTop: '8px' }}>
+                            <span className="font-semibold" style={priceStyle}>
+                              {formatPrice(dish.price, dish.priceString, dish.unit)}
+                            </span>
                             {dish.originalPrice && (
                               renderOriginalPrice(
                                 formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2358,9 +2373,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 0.6
                               )
                             )}
-                            <span className="font-semibold" style={priceStyle}>
-                              {formatPrice(dish.price, dish.priceString, dish.unit)}
-                            </span>
                           </div>
                         </div>
                       </div>
@@ -2454,14 +2466,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               {firstDish.description}
                             </div>
                           )}
-                          <div className="flex items-baseline gap-3" style={{ gap: '12px' }}>
-                            {firstDish.originalPrice && (
-                              renderOriginalPrice(
-                                formatPrice(firstDish.originalPrice, firstDish.originalPriceString, firstDish.unit),
-                                getTextStyleNoScale(firstDish.priceStyle, style.fontFamily, style.fontSize * 1.2, style.textColor),
-                                0.5
-                              )
-                            )}
+                          <div className="flex flex-col items-start" style={{ gap: '4px' }}>
                             <span 
                               className="font-bold text-3xl text-amber-600"
                               style={{
@@ -2471,6 +2476,13 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             >
                               {formatPrice(firstDish.price, firstDish.priceString, firstDish.unit)}
                             </span>
+                            {firstDish.originalPrice && (
+                              renderOriginalPrice(
+                                formatPrice(firstDish.originalPrice, firstDish.originalPriceString, firstDish.unit),
+                                getTextStyleNoScale(firstDish.priceStyle, style.fontFamily, style.fontSize * 1.2, style.textColor),
+                                0.5
+                              )
+                            )}
                           </div>
                         </div>
                       </div>
@@ -2507,7 +2519,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                     {dish.description}
                                   </div>
                                 )}
-                                <div className="flex items-baseline gap-2 mt-2" style={{ gap: '8px', marginTop: '8px' }}>
+                                <div className="flex flex-col items-start mt-2" style={{ gap: '4px', marginTop: '8px' }}>
+                                  <span className="font-semibold" style={priceStyle}>
+                                    {formatPrice(dish.price, dish.priceString, dish.unit)}
+                                  </span>
                                   {dish.originalPrice && (
                                     renderOriginalPrice(
                                       formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2515,9 +2530,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                       0.6
                                     )
                                   )}
-                                  <span className="font-semibold" style={priceStyle}>
-                                    {formatPrice(dish.price, dish.priceString, dish.unit)}
-                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -2654,7 +2666,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             </div>
                           )}
                         </div>
-                        <div className="ml-2" style={{ marginLeft: '8px' }}>
+                        <div className="flex flex-col items-end" style={{ marginLeft: '8px' }}>
+                          <span className="font-bold" style={{ ...priceStyle, fontWeight: 700 }}>
+                            {formatPrice(dish.price, dish.priceString, dish.unit)}
+                          </span>
                           {dish.originalPrice && (
                             renderOriginalPrice(
                               formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2662,9 +2677,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               0.5
                             )
                           )}
-                          <span className="font-bold" style={{ ...priceStyle, fontWeight: 700 }}>
-                            {formatPrice(dish.price, dish.priceString, dish.unit)}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -2780,7 +2792,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             {dish.description}
                           </div>
                         )}
-                        <div className="flex items-baseline gap-2 mt-2" style={{ gap: '8px', marginTop: '8px' }}>
+                        <div className="flex flex-col items-start mt-2" style={{ gap: '4px', marginTop: '8px' }}>
+                          <span className="font-semibold" style={priceStyle}>
+                            {formatPrice(dish.price, dish.priceString, dish.unit)}
+                          </span>
                           {dish.originalPrice && (
                             renderOriginalPrice(
                               formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2788,9 +2803,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               0.6
                             )
                           )}
-                          <span className="font-semibold" style={priceStyle}>
-                            {formatPrice(dish.price, dish.priceString, dish.unit)}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -2855,7 +2867,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-baseline gap-2" style={{ gap: '8px' }}>
+                      <div className="flex flex-col items-end" style={{ gap: '4px' }}>
+                        <span className="font-semibold" style={priceStyle}>
+                          {formatPrice(dish.price, dish.priceString, dish.unit)}
+                        </span>
                         {dish.originalPrice && (
                           renderOriginalPrice(
                             formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2863,9 +2878,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             0.6
                           )
                         )}
-                        <span className="font-semibold" style={priceStyle}>
-                          {formatPrice(dish.price, dish.priceString, dish.unit)}
-                        </span>
                       </div>
                     </div>
                   );
@@ -2932,7 +2944,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="flex items-baseline gap-1" style={{ gap: '4px', marginTop: '6px' }}>
+                            <div className="flex flex-col items-center" style={{ gap: '4px', marginTop: '6px' }}>
+                              <span className="font-semibold" style={priceStyle}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -2940,9 +2955,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-semibold" style={priceStyle}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -3057,27 +3069,35 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                   
                   return (
                     <div key={dish.id} className="relative">
-                      <div className="flex items-end justify-between mb-1" style={{ marginBottom: '4px' }}>
+                      <div className="flex items-baseline justify-between mb-1" style={{ marginBottom: '4px' }}>
                         <div className="font-medium" style={nameStyle}>{dish.name}</div>
                         <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
                           {formatPrice(dish.price, dish.priceString, dish.unit)}
                         </span>
                       </div>
                       <div className="absolute inset-x-0 top-3 border-t border-dashed" style={{ borderColor: style.textColor + '30', top: '12px' }}></div>
-                      {dish.description && (
-                        <div style={{ ...descStyle, marginTop: '4px' }} className="text-sm">
-                          {dish.description}
-                        </div>
-                      )}
-                      {dish.originalPrice && (
-                        <div className="text-right">
-                          {renderOriginalPrice(
-                            formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                            priceStyle,
-                            0.5
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-baseline justify-between" style={{ marginTop: '4px' }}>
+                        {dish.description && (
+                          <div style={descStyle} className="text-sm">
+                            {dish.description}
+                          </div>
+                        )}
+                        {dish.originalPrice && (
+                          <span
+                            data-original-price="true"
+                            className="whitespace-nowrap"
+                            style={{
+                              color: priceStyle.color,
+                              fontFamily: priceStyle.fontFamily,
+                              fontSize: `calc(${priceStyle.fontSize} * 0.8)`,
+                              textDecoration: 'line-through',
+                              opacity: 0.5,
+                            }}
+                          >
+                            {formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -3140,20 +3160,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                               </div>
                             )}
                             <div style={{ marginTop: '8px' }}>
-                              <div className="flex items-baseline justify-center gap-1">
-                                {dish.originalPrice && (
-                                  <>
-                                    {renderOriginalPrice(
-                                      formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                      priceStyle,
-                                      0.6
-                                    )}
-                                    <span style={{ marginRight: '4px' }}></span>
-                                  </>
-                                )}
+                              <div className="flex flex-col items-center justify-center gap-1">
                                 <span className="font-semibold text-lg" style={{ ...priceStyle, fontWeight: 600 }}>
                                   {formatPrice(dish.price, dish.priceString, dish.unit)}
                                 </span>
+                                {dish.originalPrice && (
+                                  renderOriginalPrice(
+                                    formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                    priceStyle,
+                                    0.6
+                                  )
+                                )}
                               </div>
                             </div>
                           </div>
@@ -3225,20 +3242,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                           </div>
                         )}
                         <div style={{ marginTop: '8px' }}>
-                          <div className="flex items-baseline justify-center gap-1">
-                            {dish.originalPrice && (
-                              <>
-                                {renderOriginalPrice(
-                                  formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                  priceStyle,
-                                  0.6
-                                )}
-                                <span style={{ marginRight: '4px' }}></span>
-                              </>
-                            )}
+                          <div className="flex flex-col items-center justify-center gap-1">
                             <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
                               {formatPrice(dish.price, dish.priceString, dish.unit)}
                             </span>
+                            {dish.originalPrice && (
+                              renderOriginalPrice(
+                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                                priceStyle,
+                                0.6
+                              )
+                            )}
                           </div>
                         </div>
                       </div>
@@ -3303,7 +3317,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 {dish.description}
                               </div>
                             )}
-                            <div className="flex items-baseline gap-3 mt-3" style={{ gap: '12px', marginTop: '12px' }}>
+                            <div className="flex flex-col items-start mt-3" style={{ gap: '4px', marginTop: '12px' }}>
+                              <span className="font-bold text-xl" style={{ ...priceStyle, fontSize: `${style.fontSize * 1.3}px`, fontWeight: 700 }}>
+                                {formatPrice(dish.price, dish.priceString, dish.unit)}
+                              </span>
                               {dish.originalPrice && (
                                 renderOriginalPrice(
                                   formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -3311,9 +3328,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                   0.6
                                 )
                               )}
-                              <span className="font-bold text-xl" style={{ ...priceStyle, fontSize: `${style.fontSize * 1.3}px`, fontWeight: 700 }}>
-                                {formatPrice(dish.price, dish.priceString, dish.unit)}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -3337,19 +3351,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             </div>
                           )}
                         </div>
-                        <div style={{ marginLeft: '12px' }}>
-                          {dish.originalPrice && (
-                            <div style={{ display: 'block' }}>
-                              {renderOriginalPrice(
-                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                priceStyle,
-                                0.6
-                              )}
-                            </div>
-                          )}
+                        <div style={{ marginLeft: '12px' }} className="flex flex-col items-end">
                           <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
                             {formatPrice(dish.price, dish.priceString, dish.unit)}
                           </span>
+                          {dish.originalPrice && (
+                            renderOriginalPrice(
+                              formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                              priceStyle,
+                              0.6
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3481,7 +3493,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                           </div>
                         )}
                         <div className="mt-2" style={{ marginTop: '8px' }}>
-                          <div className={`flex items-baseline gap-2 ${isEven ? '' : 'justify-end'}`} style={{ gap: '8px' }}>
+                          <div className={`flex flex-col gap-1 ${isEven ? 'items-start' : 'items-end'}`} style={{ gap: '4px' }}>
+                            <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
+                              {formatPrice(dish.price, dish.priceString, dish.unit)}
+                            </span>
                             {dish.originalPrice && (
                               renderOriginalPrice(
                                 formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
@@ -3489,9 +3504,6 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                                 0.6
                               )
                             )}
-                            <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
-                              {formatPrice(dish.price, dish.priceString, dish.unit)}
-                            </span>
                           </div>
                         </div>
                       </div>
@@ -3542,23 +3554,23 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                     <div key={dish.id} className="relative">
                       <div className="flex items-end justify-between mb-2" style={{ marginBottom: '8px' }}>
                         <div className="font-medium" style={nameStyle}>{dish.name}</div>
-                        <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
-                          {formatPrice(dish.price, dish.priceString, dish.unit)}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
+                            {formatPrice(dish.price, dish.priceString, dish.unit)}
+                          </span>
+                          {dish.originalPrice && (
+                            renderOriginalPrice(
+                              formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                              priceStyle,
+                              0.5
+                            )
+                          )}
+                        </div>
                       </div>
                       <div className="absolute inset-x-0 top-full border-t" style={{ borderColor: style.textColor + '20', top: '20px' }}></div>
                       {dish.description && (
                         <div style={{ ...descStyle, marginTop: '8px' }}>
                           {dish.description}
-                        </div>
-                      )}
-                      {dish.originalPrice && (
-                        <div className="mt-1" style={{ marginTop: '4px' }}>
-                          {renderOriginalPrice(
-                            formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                            priceStyle,
-                            0.5
-                          )}
                         </div>
                       )}
                     </div>
@@ -3624,19 +3636,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
                             </div>
                           )}
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          {dish.originalPrice && (
-                            <div style={{ display: 'block' }}>
-                              {renderOriginalPrice(
-                                formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
-                                priceStyle,
-                                0.5
-                              )}
-                            </div>
-                          )}
+                        <div className="text-right flex-shrink-0 flex flex-col items-end">
                           <span className="font-semibold" style={{ ...priceStyle, fontWeight: 600 }}>
                             {formatPrice(dish.price, dish.priceString, dish.unit)}
                           </span>
+                          {dish.originalPrice && (
+                            renderOriginalPrice(
+                              formatPrice(dish.originalPrice, dish.originalPriceString, dish.unit),
+                              priceStyle,
+                              0.5
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
