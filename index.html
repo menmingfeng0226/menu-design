@@ -1,1208 +1,359 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>3D 体感打地鼠 · NEON WHACK</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --neon-pink:#ff2e9a;
-    --neon-cyan:#00f0ff;
-    --neon-yellow:#ffe600;
-    --neon-lime:#aaff00;
-    --neon-orange:#ff7a1a;
-    --ink:#0a0612;
-    --glass:rgba(14,8,24,0.55);
-    --stroke:rgba(255,255,255,0.14);
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  html,body{width:100%;height:100%;overflow:hidden;background:#05030a;color:#fff;font-family:'Outfit',system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;cursor:crosshair;}
-  #app{position:fixed;inset:0;}
-  #three-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  #hand-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;}
-  #fw-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:20;opacity:0;transition:opacity .3s;}
-
-  /* ---------- HUD ---------- */
-  #hud{position:absolute;inset:0;z-index:10;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:22px clamp(20px,4vw,60px);}
-  .hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
-  .hud-card{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--stroke);border-radius:16px;padding:12px 18px;box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);}
-  .stat-label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600;}
-  .stat-value{font-family:'Bungee',cursive;font-size:30px;line-height:1;margin-top:4px;}
-  .stat-row{display:flex;gap:14px;flex-wrap:wrap;}
-  #score .stat-value{color:var(--neon-yellow);text-shadow:0 0 18px rgba(255,230,0,.6);}
-  #combo .stat-value{color:var(--neon-cyan);text-shadow:0 0 18px rgba(0,240,255,.6);}
-  #timer .stat-value{color:var(--neon-lime);text-shadow:0 0 18px rgba(170,255,0,.55);}
-  #timer.warn .stat-value{color:var(--neon-pink);text-shadow:0 0 18px rgba(255,46,154,.7);animation:pulse .6s ease-in-out infinite;}
-  @keyframes pulse{50%{transform:scale(1.08);}}
-  #level .stat-value{color:#fff;font-size:22px;}
-
-  .combo-meter{height:6px;width:120px;background:rgba(255,255,255,.12);border-radius:3px;margin-top:8px;overflow:hidden;}
-  .combo-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink));border-radius:3px;transition:width .12s linear;}
-
-  .hud-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;}
-  #mode-badge{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:8px;}
-  #mode-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--neon-lime);box-shadow:0 0 12px var(--neon-lime);animation:blink 1.4s infinite;}
-  @keyframes blink{50%{opacity:.35;}}
-  .hand-indicators{display:flex;gap:14px;}
-  .hand-pill{display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--stroke);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;}
-  .hand-pill .dot{width:9px;height:9px;border-radius:50%;background:#444;transition:.12s;}
-  .hand-pill.l.active .dot{background:var(--neon-cyan);box-shadow:0 0 14px var(--neon-cyan);}
-  .hand-pill.r.active .dot{background:var(--neon-pink);box-shadow:0 0 14px var(--neon-pink);}
-
-  /* ---------- Screens ---------- */
-  .screen{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:30px;}
-  .screen.hidden{display:none;}
-  .panel{background:linear-gradient(160deg,rgba(20,10,36,.92),rgba(10,6,20,.96));border:1px solid var(--stroke);border-radius:28px;padding:clamp(28px,4vw,52px);max-width:640px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);position:relative;overflow:hidden;}
-  .panel::before{content:"";position:absolute;top:-40%;left:-20%;width:140%;height:80%;background:radial-gradient(ellipse at center,rgba(255,46,154,.22),transparent 60%);pointer-events:none;}
-  .panel::after{content:"";position:absolute;bottom:-50%;right:-20%;width:120%;height:80%;background:radial-gradient(ellipse at center,rgba(0,240,255,.18),transparent 60%);pointer-events:none;}
-  .panel > *{position:relative;z-index:1;}
-
-  .brand{font-family:'Bungee',cursive;font-size:clamp(38px,7vw,68px);line-height:.92;letter-spacing:-.01em;text-align:center;}
-  .brand .l1{display:block;color:#fff;text-shadow:0 0 30px rgba(255,255,255,.25);}
-  .brand .l2{display:block;background:linear-gradient(90deg,var(--neon-pink),var(--neon-yellow),var(--neon-cyan));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px rgba(255,46,154,.45));}
-  .tagline{text-align:center;color:rgba(255,255,255,.65);margin-top:14px;font-size:15px;letter-spacing:.04em;}
-
-  .mode-select{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:30px;}
-  .mode-btn{background:rgba(255,255,255,.04);border:1.5px solid var(--stroke);border-radius:18px;padding:22px 18px;cursor:pointer;text-align:left;transition:.2s;color:#fff;font-family:inherit;}
-  .mode-btn:hover{transform:translateY(-3px);border-color:var(--neon-cyan);background:rgba(0,240,255,.08);box-shadow:0 12px 30px rgba(0,240,255,.18);}
-  .mode-btn .ic{font-size:26px;display:block;margin-bottom:8px;}
-  .mode-btn h4{font-family:'Bungee',cursive;font-size:17px;letter-spacing:.02em;}
-  .mode-btn p{font-size:12px;color:rgba(255,255,255,.55);margin-top:4px;line-height:1.5;}
-  .mode-btn.primary{border-color:var(--neon-pink);background:linear-gradient(135deg,rgba(255,46,154,.18),rgba(255,122,26,.1));}
-  .mode-btn.primary:hover{border-color:var(--neon-yellow);box-shadow:0 12px 30px rgba(255,230,0,.2);}
-
-  .start-btn{display:block;margin:28px auto 0;background:linear-gradient(90deg,var(--neon-pink),var(--neon-orange));border:none;border-radius:16px;padding:18px 56px;font-family:'Bungee',cursive;font-size:22px;color:#fff;cursor:pointer;letter-spacing:.04em;box-shadow:0 14px 40px rgba(255,46,154,.45);transition:.2s;}
-  .start-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 18px 50px rgba(255,46,154,.6);}
-  .start-btn:active{transform:translateY(0) scale(.99);}
-  .start-btn.ghost{background:transparent;border:1.5px solid var(--stroke);box-shadow:none;font-size:15px;padding:13px 34px;margin-top:14px;}
-  .start-btn.ghost:hover{border-color:var(--neon-cyan);color:var(--neon-cyan);box-shadow:0 8px 24px rgba(0,240,255,.18);}
-
-  .how-list{margin-top:24px;display:grid;gap:10px;font-size:13.5px;color:rgba(255,255,255,.72);}
-  .how-list li{list-style:none;display:flex;gap:10px;align-items:flex-start;}
-  .how-list .k{flex-shrink:0;width:22px;height:22px;border-radius:7px;background:rgba(255,230,0,.15);color:var(--neon-yellow);font-weight:700;font-size:12px;display:grid;place-items:center;}
-
-  /* level intro */
-  .level-no{font-family:'Bungee',cursive;font-size:18px;letter-spacing:.3em;color:var(--neon-cyan);text-align:center;}
-  .level-title{text-align:center;font-family:'Bungee',cursive;font-size:clamp(40px,8vw,72px);margin-top:6px;background:linear-gradient(90deg,#fff,var(--neon-yellow));-webkit-background-clip:text;background-clip:text;color:transparent;}
-  .level-desc{text-align:center;color:rgba(255,255,255,.6);margin-top:10px;font-size:14px;}
-  .target-row{display:flex;justify-content:center;gap:30px;margin-top:26px;flex-wrap:wrap;}
-  .target-cell{text-align:center;}
-  .target-cell .v{font-family:'Bungee',cursive;font-size:30px;}
-  .target-cell .l{font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:4px;}
-
-  /* settlement */
-  .rating{font-family:'Bungee',cursive;font-size:clamp(110px,22vw,200px);line-height:.8;text-align:center;background:linear-gradient(180deg,var(--neon-yellow),var(--neon-orange));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 40px rgba(255,230,0,.5));animation:popIn .6s cubic-bezier(.2,1.4,.4,1);}
-  @keyframes popIn{0%{transform:scale(0) rotate(-20deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
-  .stars{text-align:center;margin-top:6px;font-size:26px;letter-spacing:6px;}
-  .final-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px;}
-  .fs-cell{background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:14px;padding:14px;text-align:center;}
-  .fs-cell .v{font-family:'Bungee',cursive;font-size:24px;color:var(--neon-cyan);}
-  .fs-cell .l{font-size:10px;letter-spacing:.18em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:4px;}
-  .verdict{text-align:center;margin-top:18px;font-size:15px;color:rgba(255,255,255,.75);}
-
-  /* countdown big */
-  #countdown{position:absolute;inset:0;z-index:25;display:none;align-items:center;justify-content:center;pointer-events:none;}
-  #countdown.show{display:flex;}
-  #countdown .num{font-family:'Bungee',cursive;font-size:clamp(120px,22vw,260px);background:linear-gradient(180deg,#fff,var(--neon-pink));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 50px rgba(255,46,154,.6));animation:cdPop .9s ease-out;}
-  @keyframes cdPop{0%{transform:scale(2.2);opacity:0;}30%{opacity:1;}100%{transform:scale(.7);opacity:0;}}
-
-  /* floating score popups */
-  .float-score{position:absolute;z-index:15;font-family:'Bungee',cursive;font-size:30px;pointer-events:none;animation:floatUp .9s ease-out forwards;text-shadow:0 0 18px currentColor;}
-  @keyframes floatUp{0%{transform:translate(-50%,0) scale(.6);opacity:0;}20%{opacity:1;transform:translate(-50%,-12px) scale(1.15);}100%{transform:translate(-50%,-90px) scale(1);opacity:0;}}
-
-  /* flash overlay */
-  #flash{position:absolute;inset:0;z-index:18;pointer-events:none;opacity:0;background:#fff;}
-  #flash.bomb{background:radial-gradient(circle,rgba(255,40,40,.85),rgba(120,0,0,.3));}
-  #flash.gold{background:radial-gradient(circle,rgba(255,230,0,.6),transparent);}
-
-  /* loading */
-  #loader{position:absolute;inset:0;z-index:40;background:#05030a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s;}
-  #loader.hide{opacity:0;pointer-events:none;}
-  .spinner{width:54px;height:54px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--neon-pink);animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  #loader p{color:rgba(255,255,255,.6);font-size:14px;letter-spacing:.05em;}
-
-  /* permission error */
-  .err-box{background:rgba(255,46,154,.12);border:1px solid var(--neon-pink);border-radius:14px;padding:14px 18px;margin-top:18px;font-size:13px;color:#ffd0e4;line-height:1.6;}
-
-  /* screen shake */
-  .shake{animation:shake .35s;}
-  @keyframes shake{10%,90%{transform:translate(-2px,1px);}20%,80%{transform:translate(4px,-2px);}30%,50%,70%{transform:translate(-6px,2px);}40%,60%{transform:translate(6px,-1px);}}
-
-  .hidden{display:none !important;}
-  @media (max-width:560px){
-    .mode-select{grid-template-columns:1fr;}
-    .final-stats{grid-template-columns:repeat(3,1fr);}
-    .stat-value{font-size:24px;}
-  }
-</style>
-</head>
-<body>
-<div id="app">
-  <canvas id="three-canvas"></canvas>
-  <canvas id="hand-canvas"></canvas>
-  <canvas id="fw-canvas"></canvas>
-  <div id="flash"></div>
-
-  <!-- HUD -->
-  <div id="hud" class="hidden">
-    <div class="hud-top">
-      <div class="stat-row">
-        <div class="hud-card" id="score"><div class="stat-label">Score</div><div class="stat-value">0</div></div>
-        <div class="hud-card" id="combo"><div class="stat-label">Combo</div><div class="stat-value">x1.0</div><div class="combo-meter"><i></i></div></div>
-      </div>
-      <div class="stat-row">
-        <div class="hud-card" id="level"><div class="stat-label">Level</div><div class="stat-value">1 / 5</div></div>
-        <div class="hud-card" id="timer"><div class="stat-label">Time</div><div class="stat-value">30</div></div>
-      </div>
-    </div>
-    <div class="hud-bottom">
-      <div id="mode-badge"><span class="dot"></span><span id="mode-text">体感模式</span></div>
-      <div class="hand-indicators">
-        <div class="hand-pill l" id="pill-l"><span class="dot"></span><span>左手</span></div>
-        <div class="hand-pill r" id="pill-r"><span class="dot"></span><span>右手</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="countdown"><div class="num">3</div></div>
-
-  <!-- Start Screen -->
-  <div class="screen" id="start-screen">
-    <div class="panel">
-      <div class="brand"><span class="l1">NEON</span><span class="l2">WHACK</span></div>
-      <p class="tagline">3D 体感打地鼠 · 挥拳出击，打爆地鼠王国</p>
-
-      <div class="mode-select">
-        <button class="mode-btn primary" data-mode="gesture">
-          <span class="ic">✊</span>
-          <h4>体感模式</h4>
-          <p>开启摄像头，双手握拳挥出击打地鼠，沉浸式 AR 体验</p>
-        </button>
-        <button class="mode-btn" data-mode="mouse">
-          <span class="ic">🖱️</span>
-          <h4>鼠标模式</h4>
-          <p>无需摄像头，点击地鼠即可命中，随时畅玩</p>
-        </button>
-      </div>
-
-      <ul class="how-list">
-        <li><span class="k">1</span><span>普通地鼠（棕色）+100 分 · 金色地鼠 +300 分 · 黑色炸弹切勿击打！</span></li>
-        <li><span class="k">2</span><span>连续命中提升连击倍率，最高 5.0x；打中炸弹或漏击将重置连击</span></li>
-        <li><span class="k">3</span><span>5 个关卡难度递增，达成目标分数即可解锁更高评级</span></li>
-      </ul>
-
-      <button class="start-btn" id="btn-start">开始游戏</button>
-      <div id="perm-error"></div>
-    </div>
-  </div>
-
-  <!-- Level Intro -->
-  <div class="screen hidden" id="level-screen">
-    <div class="panel" style="text-align:center;">
-      <div class="level-no" id="lv-no">LEVEL 1</div>
-      <div class="level-title" id="lv-title">草原初遇</div>
-      <div class="level-desc" id="lv-desc">地鼠们刚刚探出头，热身一下</div>
-      <div class="target-row">
-        <div class="target-cell"><div class="v" id="lv-holes">3</div><div class="l">洞口</div></div>
-        <div class="target-cell"><div class="v" id="lv-time">30s</div><div class="l">时长</div></div>
-        <div class="target-cell"><div class="v" id="lv-target">800</div><div class="l">目标分</div></div>
-      </div>
-      <button class="start-btn" id="btn-level-go">出击</button>
-    </div>
-  </div>
-
-  <!-- Settlement -->
-  <div class="screen hidden" id="settle-screen">
-    <div class="panel" style="text-align:center;">
-      <div class="level-no" id="st-no">LEVEL CLEAR</div>
-      <div class="rating" id="st-rating">S</div>
-      <div class="stars" id="st-stars">★★★</div>
-      <div class="final-stats">
-        <div class="fs-cell"><div class="v" id="st-score">0</div><div class="l">本关得分</div></div>
-        <div class="fs-cell"><div class="v" id="st-combo">0</div><div class="l">最高连击</div></div>
-        <div class="fs-cell"><div class="v" id="st-acc">0%</div><div class="l">命中率</div></div>
-      </div>
-      <div class="verdict" id="st-verdict"></div>
-      <button class="start-btn" id="btn-next">下一关</button>
-      <button class="start-btn ghost hidden" id="btn-restart-all">重新开始</button>
-    </div>
-  </div>
-
-  <div id="loader"><div class="spinner"></div><p id="loader-text">正在加载游戏资源…</p></div>
-</div>
-
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
-
-<script type="importmap">
-{
-  "imports":{
-    "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-
-<script type="module">
-import * as THREE from 'three';
-
-/* ============================================================
-   全局状态
-============================================================ */
-const State = {
-  mode: null,            // 'gesture' | 'mouse'
-  phase: 'start',        // start | levelIntro | playing | settle | finished
-  levelIndex: 0,
-  score: 0,              // 当前关得分
-  totalScore: 0,         // 累计得分
-  combo: 0,              // 连击数
-  maxCombo: 0,
-  multiplier: 1,
-  comboTimer: 0,         // 连击衰减计时
-  hits: 0,               // 命中数
-  attempts: 0,           // 出现的地鼠数(可被打的)
-  timeLeft: 0,
-  levelStartScore: 0,
-  running: false,
-  handsReady: false,
-};
-
-/* 关卡配置 */
-const LEVELS = [
-  { name:'草原初遇', desc:'地鼠们刚刚探出头，热身一下', holes:3, time:30, target:800,  spawnMin:1.2, spawnMax:1.9, bombRate:0.08, goldRate:0.06, lifeMin:2.2, lifeMax:3.2 },
-  { name:'灌木丛中', desc:'洞口变多，速度加快，小心炸弹', holes:5, time:35, target:1800, spawnMin:0.95,spawnMax:1.6, bombRate:0.14, goldRate:0.08, lifeMin:1.9, lifeMax:2.9 },
-  { name:'月光沼泽', desc:'金色地鼠频繁出没，抓住机会', holes:6, time:40, target:3000, spawnMin:0.8, spawnMax:1.35,bombRate:0.18, goldRate:0.12, lifeMin:1.7, lifeMax:2.6 },
-  { name:'熔岩裂谷', desc:'炸弹成群，眼疾手快才能幸存', holes:8, time:40, target:4500, spawnMin:0.65,spawnMax:1.1, bombRate:0.24, goldRate:0.10, lifeMin:1.5, lifeMax:2.3 },
-  { name:'地鼠王座', desc:'最终决战，所有地鼠倾巢而出', holes:9, time:45, target:6500, spawnMin:0.5, spawnMax:0.9, bombRate:0.28, goldRate:0.13, lifeMin:1.3, lifeMax:2.0 },
-];
-
-const HOLE_LAYOUTS = {
-  3:[[0,0],[-1.6,0],[1.6,0]],
-  5:[[0,0.5],[-1.7,0.5],[1.7,0.5],[-0.9,-0.9],[0.9,-0.9]],
-  6:[[-1.7,0.6],[0,0.6],[1.7,0.6],[-1.7,-0.9],[0,-0.9],[1.7,-0.9]],
-  8:[[-2.3,0.7],[-0.8,0.7],[0.8,0.7],[2.3,0.7],[-1.55,-0.7],[0,-0.7],[1.55,-0.7],[0,-1.8]],
-  9:[[-2.3,0.8],[-0.8,0.8],[0.8,0.8],[2.3,0.8],[-2.3,-0.6],[-0.8,-0.6],[0.8,-0.6],[2.3,-0.6],[0,-1.9]],
-};
-
-/* ============================================================
-   DOM 引用
-============================================================ */
-const $ = id => document.getElementById(id);
-const threeCanvas = $('three-canvas');
-const handCanvas = $('hand-canvas');
-const fwCanvas = $('fw-canvas');
-const flashEl = $('flash');
-const hudEl = $('hud');
-const appEl = $('app');
-
-/* ============================================================
-   Three.js 场景
-============================================================ */
-let renderer, scene, camera, clock;
-let videoTexture, videoEl;
-const holes = [];      // {group, pos:Vector3, mole:null}
-const activeMoles = [];
-
-function initThree(){
-  renderer = new THREE.WebGLRenderer({canvas:threeCanvas, antialias:true, alpha:false});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.setSize(innerWidth, innerHeight);
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
-  camera.position.set(0, 2.2, 5.6);
-  camera.lookAt(0, -0.2, 0);
-
-  // 灯光
-  const ambient = new THREE.AmbientLight(0x6a5a8a, 0.7);
-  scene.add(ambient);
-  const key = new THREE.DirectionalLight(0xffffff, 1.1);
-  key.position.set(3,6,4);
-  scene.add(key);
-  const rimPink = new THREE.PointLight(0xff2e9a, 1.2, 18);
-  rimPink.position.set(-4,2,2);
-  scene.add(rimPink);
-  const rimCyan = new THREE.PointLight(0x00f0ff, 1.2, 18);
-  rimCyan.position.set(4,2,2);
-  scene.add(rimCyan);
-
-  clock = new THREE.Clock();
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/menu-design/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>菜单大师 - 餐厅菜单制作工具</title>
+    <meta name="description" content="专业餐厅菜单制作工具，帮助餐厅快速创建美观、专业的数字菜单">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:wght@400;500;600;700&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+XiaoWei&family=Long+Cang&family=Georgia&family=Times+New+Roman&family=Arial&family=Helvetica&family=Roboto:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Oswald:wght@400;500;700&family=Raleway:wght@400;500;700&family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/menu-design/assets/index-DTbJLsav.js"></script>
+    <link rel="stylesheet" crossorigin href="/menu-design/assets/index-BralRthG.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  
+          <script>
+            (function() {
+              'use strict';
+              
+              if (window.TraeBadgePlugin) return;
+              
+              const css = `
+.trae-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+  border-radius: 6px;
+  position: fixed;
+  padding: 8px 8px 8px 10px;
+  height: 28px;
+  width: 130px;
+  z-index: 9999;
 }
 
-function setBackgroundVideo(video){
-  if(videoTexture) videoTexture.dispose();
-  videoTexture = new THREE.VideoTexture(video);
-  videoTexture.colorSpace = THREE.SRGBColorSpace;
-  // 镜像：通过 repeat/offset 实现水平翻转
-  videoTexture.wrapS = THREE.RepeatWrapping;
-  videoTexture.repeat.x = -1;
-  videoTexture.offset.x = 1;
-  scene.background = videoTexture;
+.trae-badge:hover.trae-badge--light {
+  background-color: #EDEFF2;
 }
 
-/* ---------- 地鼠模型构建 ---------- */
-function buildMole(type){
-  const g = new THREE.Group();
-  let bodyMat, bodyColor, accent;
-
-  if(type==='bomb'){
-    bodyColor = 0x1a1a22; bodyMat = new THREE.MeshStandardMaterial({color:bodyColor, roughness:0.5, metalness:0.3});
-    // 身体
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.46,24,20), bodyMat); body.position.y=0.46; g.add(body);
-    // 引线
-    const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.05,0.28,10), new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:1}));
-    fuse.position.set(0,0.95,0.1); fuse.rotation.z=0.3; g.add(fuse);
-    // 火花光
-    const spark = new THREE.PointLight(0xff5a1a, 2.2, 3); spark.position.set(0.1,1.12,0.16); g.add(spark);
-    const sparkMesh = new THREE.Mesh(new THREE.SphereGeometry(0.07,10,10), new THREE.MeshBasicMaterial({color:0xffaa33}));
-    sparkMesh.position.copy(spark.position); g.add(sparkMesh);
-    g.userData.spark = sparkMesh; g.userData.sparkLight = spark;
-    // 危险纹
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.47,0.05,10,28), new THREE.MeshStandardMaterial({color:0xff2a2a,emissive:0xff0000,emissiveIntensity:0.6}));
-    band.position.y=0.46; band.rotation.x=Math.PI/2; g.add(band);
-  } else if(type==='gold'){
-    bodyMat = new THREE.MeshStandardMaterial({color:0xffcc22, roughness:0.2, metalness:0.95, emissive:0x553300, emissiveIntensity:0.5});
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.44,24,20), bodyMat); body.position.y=0.44; g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.34,22,18), bodyMat); head.position.y=0.82; g.add(head);
-    // 皇冠
-    const crown = new THREE.Mesh(new THREE.ConeGeometry(0.18,0.22,5), new THREE.MeshStandardMaterial({color:0xfff066,metalness:1,roughness:0.1,emissive:0x886600}));
-    crown.position.y=1.12; g.add(crown);
-    const glow = new THREE.PointLight(0xffcc33, 1.6, 3.5); glow.position.y=0.7; g.add(glow);
-    addEyes(g, 0.86, 0.12);
-    addEars(g, 0.44, bodyMat);
-  } else {
-    // 普通
-    bodyMat = new THREE.MeshStandardMaterial({color:0x7a5230, roughness:0.85});
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.42,24,20), bodyMat); body.position.y=0.42; g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.33,22,18), new THREE.MeshStandardMaterial({color:0x8a6038,roughness:0.8})); head.position.y=0.78; g.add(head);
-    // 鼻子
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.07,10,10), new THREE.MeshStandardMaterial({color:0xff8899})); nose.position.set(0,0.78,0.3); g.add(nose);
-    addEyes(g, 0.82, 0.11);
-    addEars(g, 0.42, bodyMat);
-  }
-  g.userData.type = type;
-  return g;
-}
-function addEyes(g, y, half){
-  const eMat = new THREE.MeshStandardMaterial({color:0x111111});
-  const l = new THREE.Mesh(new THREE.SphereGeometry(0.045,10,10), eMat); l.position.set(-half,y,0.28); g.add(l);
-  const r = new THREE.Mesh(new THREE.SphereGeometry(0.045,10,10), eMat); r.position.set(half,y,0.28); g.add(r);
-}
-function addEars(g, y, mat){
-  const l = new THREE.Mesh(new THREE.SphereGeometry(0.1,10,10), mat); l.position.set(-0.22,y+0.05,0); l.scale.set(1,1.2,0.6); g.add(l);
-  const r = new THREE.Mesh(new THREE.SphereGeometry(0.1,10,10), mat); r.position.set(0.22,y+0.05,0); r.scale.set(1,1.2,0.6); g.add(r);
+.trae-badge:hover.trae-badge--dark {
+  background-color: #2A2D31;
 }
 
-/* ---------- 洞口 ---------- */
-function buildHole(pos){
-  const group = new THREE.Group();
-  group.position.set(pos[0], 0, pos[1]);
-  // 暗洞
-  const pit = new THREE.Mesh(
-    new THREE.CircleGeometry(0.62, 36),
-    new THREE.MeshBasicMaterial({color:0x05030a})
-  );
-  pit.rotation.x = -Math.PI/2; pit.position.y = 0.001;
-  group.add(pit);
-  // 霓虹环
-  const rim = new THREE.Mesh(
-    new THREE.TorusGeometry(0.64, 0.06, 16, 40),
-    new THREE.MeshStandardMaterial({color:0x00f0ff, emissive:0x00f0ff, emissiveIntensity:1.4, roughness:0.3, metalness:0.6})
-  );
-  rim.rotation.x = -Math.PI/2; rim.position.y = 0.02;
-  group.add(rim);
-  // 内圈土堆
-  const mound = new THREE.Mesh(
-    new THREE.RingGeometry(0.64, 0.95, 40),
-    new THREE.MeshStandardMaterial({color:0x3a2818, roughness:1, side:THREE.DoubleSide})
-  );
-  mound.rotation.x = -Math.PI/2; mound.position.y = 0.015;
-  group.add(mound);
-  scene.add(group);
-  const hole = { group, pos:new THREE.Vector3(pos[0],0,pos[1]), mole:null, rim };
-  holes.push(hole);
-  return hole;
+.trae-badge-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
-function buildLevel(idx){
-  clearMoles();
-  holes.forEach(h=>scene.remove(h.group));
-  holes.length = 0;
-  const cfg = LEVELS[idx];
-  const layout = HOLE_LAYOUTS[cfg.holes] || HOLE_LAYOUTS[9];
-  layout.forEach(p=>buildHole(p));
+.trae-badge-logo {
+  flex-shrink: 0;
 }
 
-function clearMoles(){
-  for(const m of activeMoles){
-    if(m.group.parent) m.group.parent.remove(m.group);
-    disposeGroup(m.group);
-  }
-  activeMoles.length = 0;
-  holes.forEach(h=>h.mole=null);
+.trae-badge-share {
+  flex-shrink: 0;
+  color: rgba(78, 82, 87, 1);
 }
 
-function disposeGroup(g){
-  g.traverse(o=>{
-    if(o.geometry) o.geometry.dispose();
-    if(o.material){ Array.isArray(o.material)?o.material.forEach(m=>m.dispose()):o.material.dispose(); }
-  });
+.trae-badge:hover.trae-badge--light .trae-badge-share {
+  color: rgba(38, 41, 44, 1);
 }
 
-/* ---------- 地鼠生成 ---------- */
-function spawnMole(){
-  const cfg = LEVELS[State.levelIndex];
-  const free = holes.filter(h=>!h.mole);
-  if(!free.length) return;
-  const hole = free[Math.floor(Math.random()*free.length)];
-  const r = Math.random();
-  let type = 'normal';
-  if(r < cfg.bombRate) type='bomb';
-  else if(r < cfg.bombRate + cfg.goldRate) type='gold';
-
-  const g = buildMole(type);
-  g.position.copy(hole.pos);
-  g.position.y = -0.9; // 起始藏在洞里
-  g.scale.setScalar(0.6);
-  scene.add(g);
-
-  const life = cfg.lifeMin + Math.random()*(cfg.lifeMax-cfg.lifeMin);
-  const mole = {
-    group:g, type, hole,
-    born:performance.now(), life:life*1000,
-    state:'rising', hit:false,
-    targetY: 0.55,
-  };
-  hole.mole = mole;
-  activeMoles.push(mole);
-  if(type!=='bomb') State.attempts++;
+.trae-badge:hover.trae-badge--dark .trae-badge-share {
+  color: #D1D3DB;
 }
 
-/* ============================================================
-   MediaPipe 手势识别
-============================================================ */
-let mpHands, mpCamera;
-const handCanvasCtx = handCanvas.getContext('2d');
-const handState = {
-  left:{fist:false, x:0.5, y:0.5, active:false, cooldown:0, palmSize:0},
-  right:{fist:false, x:0.5, y:0.5, active:false, cooldown:0, palmSize:0},
-};
-
-async function initHands(video){
-  mpHands = new Hands({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${f}`});
-  mpHands.setOptions({maxNumHands:2, modelComplexity:1, minDetectionConfidence:0.6, minTrackingConfidence:0.5});
-  mpHands.onResults(onHandResults);
-  mpCamera = new Camera(video, {
-    onFrame: async()=>{ await mpHands.send({image:video}); },
-    width:640, height:480
-  });
-  await mpCamera.start();
-  State.handsReady = true;
+.trae-badge-cancel {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
 }
 
-function onHandResults(results){
-  // 画骨架
-  resizeHandCanvas();
-  handCanvasCtx.clearRect(0,0,handCanvas.width,handCanvas.height);
-  const lw = handCanvas.width, lh = handCanvas.height;
-
-  // 重置活跃
-  handState.left.active=false; handState.right.active=false;
-
-  if(!results.multiHandLandmarks || !results.multiHandLandmarks.length){
-    updateHandPills();
-    return;
-  }
-  for(let i=0;i<results.multiHandLandmarks.length;i++){
-    const lm = results.multiHandLandmarks[i];
-    const handed = results.multiHandedness[i].label; // 'Left'/'Right' (镜像后需互换)
-    // 由于摄像头镜像显示，MediaPipe 的 Left/Right 与用户视角相反，互换
-    const side = handed==='Left' ? 'right' : 'left';
-    const hs = handState[side];
-
-    // 计算拳心(掌心)
-    const palm = avgPoints([lm[0],lm[5],lm[9],lm[13],lm[17]]);
-    // 手大小：腕(0) 到 中指掌指(9)
-    const handSize = dist3(lm[0], lm[9]);
-    hs.palmSize = handSize;
-
-    // 拳头判定：4 指尖到掌心距离 平均 < handSize * 0.62
-    const tips=[lm[8],lm[12],lm[16],lm[20]];
-    let sum=0; tips.forEach(t=>sum+=dist3(t,palm));
-    const avgTip = sum/4;
-    const isFist = avgTip < handSize*0.62 && handSize>0.04;
-
-    // 坐标(镜像：x 用 1-x，与视频镜像背景一致)
-    const nx = 1 - palm.x;
-    const ny = palm.y;
-    hs.x = nx; hs.y = ny;
-    hs.active = true;
-
-    // 挥拳触发：从未握拳→握拳
-    const wasFist = hs.fist;
-    hs.fist = isFist;
-    if(isFist && !wasFist && hs.cooldown<=0){
-      // 触发一次挥拳命中检测
-      tryHitAt(nx, ny, side);
-      hs.cooldown = 0.35;
-    }
-    // 持续握拳也能命中（节奏宽松）：拳头处于握紧且在洞口上方
-    if(isFist && hs.cooldown<=0){
-      tryHitAt(nx, ny, side, true);
-      hs.cooldown = 0.28;
-    }
-
-    // 绘制骨架
-    drawHandSkeleton(lm, side, isFist);
-  }
-  updateHandPills();
+.trae-badge:hover .trae-badge-cancel {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-function avgPoints(pts){
-  let x=0,y=0,z=0; pts.forEach(p=>{x+=p.x;y+=p.y;z+=p.z;});
-  return {x:x/pts.length, y:y/pts.length, z:z/pts.length};
-}
-function dist3(a,b){const dx=a.x-b.x,dy=a.y-b.y,dz=(a.z||0)-(b.z||0);return Math.sqrt(dx*dx+dy*dy+dz*dz);}
-
-const HAND_CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-
-function drawHandSkeleton(lm, side, isFist){
-  const ctx = handCanvasCtx;
-  const w = handCanvas.width, h = handCanvas.height;
-  const color = side==='left' ? '#00f0ff' : '#ff2e9a';
-  ctx.lineWidth = 3; ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  // 连线
-  ctx.beginPath();
-  HAND_CONNECTIONS.forEach(([a,b])=>{
-    const pa=lm[a],pb=lm[b];
-    ctx.moveTo((1-pa.x)*w, pa.y*h);
-    ctx.lineTo((1-pb.x)*w, pb.y*h);
-  });
-  ctx.stroke();
-  // 关节点
-  lm.forEach(p=>{
-    ctx.beginPath();
-    ctx.arc((1-p.x)*w, p.y*h, 3.5, 0, Math.PI*2);
-    ctx.fill();
-  });
-  // 拳头中心高亮
-  const palm = avgPoints([lm[0],lm[5],lm[9],lm[13],lm[17]]);
-  const px=(1-palm.x)*w, py=palm.y*h;
-  if(isFist){
-    ctx.save();
-    ctx.shadowBlur=30; ctx.shadowColor=color;
-    ctx.globalAlpha=0.35;
-    ctx.beginPath(); ctx.arc(px,py,34,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-    ctx.lineWidth=3; ctx.globalAlpha=1;
-    ctx.beginPath(); ctx.arc(px,py,34,0,Math.PI*2); ctx.stroke();
-  } else {
-    ctx.globalAlpha=0.5;
-    ctx.beginPath(); ctx.arc(px,py,16,0,Math.PI*2); ctx.stroke();
-    ctx.globalAlpha=1;
+/* 在移动端设备上始终显示取消按钮 */
+@media (hover: none) and (pointer: coarse) {
+  .trae-badge-cancel {
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 }
 
-function updateHandPills(){
-  $('pill-l').classList.toggle('active', handState.left.active);
-  $('pill-r').classList.toggle('active', handState.right.active);
+.trae-badge--light {
+  background-color: rgba(255, 255, 255, 1);
+  color: #ffffff;
+  box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.12), 0px 1px 3px 0px rgba(0, 0, 0, 0.08), 0px 4px 8px 0px rgba(0, 0, 0, 0.12);
 }
 
-function resizeHandCanvas(){
-  if(handCanvas.width!==innerWidth||handCanvas.height!==innerHeight){
-    handCanvas.width=innerWidth; handCanvas.height=innerHeight;
-  }
+.trae-badge--dark {
+  background-color: #000000;
+  color: #ffffff;
+  box-shadow: 0px 0px 0.5px 0px rgba(0, 0, 0, 0.12), 0px 1px 3px 0px rgba(0, 0, 0, 0.08), 0px 4px 8px 0px rgba(0, 0, 0, 0.12);
 }
 
-/* ============================================================
-   命中检测
-============================================================ */
-const _proj = new THREE.Vector3();
-function moleScreenPos(mole){
-  _proj.setFromMatrixPosition(mole.group.matrixWorld);
-  _proj.y = mole.group.position.y + 0.4;
-  _proj.project(camera);
-  // 转为 0..1 (与 hand normalized 一致，y 翻转)
-  return { x: (_proj.x*0.5+0.5), y: (-_proj.y*0.5+0.5) };
-}
-
-function tryHitAt(nx, ny, side, continuous=false){
-  if(State.phase!=='playing') return;
-  const hitRadius = 0.16; // 归一化半径
-  let best=null, bestD=Infinity;
-  for(const m of activeMoles){
-    if(m.hit || m.state==='hiding') continue;
-    const sp = moleScreenPos(m);
-    const d = Math.hypot(sp.x-nx, sp.y-ny);
-    if(d < hitRadius && d < bestD){ best=m; bestD=d; }
-  }
-  if(best){
-    hitMole(best, side, nx, ny);
-  }
-}
-
-function hitMole(mole, side, nx, ny){
-  mole.hit = true;
-  const px = nx*innerWidth, py = ny*innerHeight;
-  if(mole.type==='bomb'){
-    // 炸弹：扣分、重置连击、震屏
-    addScore(-200);
-    State.combo = 0; State.multiplier = 1; State.comboTimer = 0;
-    flashScreen('bomb');
-    shakeScreen();
-    playBomb();
-    floatScore(px, py, '-200', '#ff4a4a');
-    explodeMole(mole, 0xff3322);
-  } else {
-    const base = mole.type==='gold' ? 300 : 100;
-    const gain = Math.round(base * State.multiplier);
-    addScore(gain);
-    State.combo++;
-    State.maxCombo = Math.max(State.maxCombo, State.combo);
-    State.multiplier = Math.min(5, 1 + State.combo*0.25);
-    State.comboTimer = 2.0; // 2秒内保持连击
-    State.hits++;
-    if(mole.type==='gold'){ flashScreen('gold'); playGold(); }
-    else playHit();
-    floatScore(px, py, '+'+gain, mole.type==='gold'?'#ffe600':'#aaff00');
-    explodeMole(mole, mole.type==='gold'?0xffcc33:0xaaff66);
-  }
-  // 弹回洞中
-  mole.state = 'hiding';
-}
-
-function addScore(v){
-  State.score = Math.max(0, State.score + v);
-  updateHUD();
-}
-
-/* ============================================================
-   粒子爆炸
-============================================================ */
-const particles = [];
-function explodeMole(mole, color){
-  const pos = mole.group.position.clone();
-  pos.y += 0.5;
-  const count = mole.type==='gold' ? 26 : 16;
-  for(let i=0;i<count;i++){
-    const geo = new THREE.SphereGeometry(0.05+Math.random()*0.05, 6,6);
-    const mat = new THREE.MeshBasicMaterial({color: color + (Math.random()*0x222222)});
-    const m = new THREE.Mesh(geo, mat);
-    m.position.copy(pos);
-    const v = new THREE.Vector3((Math.random()-0.5)*4, Math.random()*4+1, (Math.random()-0.5)*4);
-    scene.add(m);
-    particles.push({mesh:m, vel:v, life:0.7, age:0});
-  }
-}
-function updateParticles(dt){
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    p.age+=dt;
-    p.vel.y -= 9*dt;
-    p.mesh.position.addScaledVector(p.vel, dt);
-    const s = Math.max(0, 1 - p.age/p.life);
-    p.mesh.scale.setScalar(s);
-    if(p.age>=p.life){
-      scene.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.material.dispose();
-      particles.splice(i,1);
-    }
-  }
-}
-
-/* ============================================================
-   音效 (Web Audio)
-============================================================ */
-let audioCtx;
-function ensureAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended') audioCtx.resume();
-}
-function tone(freq, dur, type='sine', vol=0.2, slideTo=null){
-  if(!audioCtx) return;
-  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type=type; o.frequency.value=freq;
-  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime+dur);
-  g.gain.setValueAtTime(vol, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime+dur);
-}
-function noiseBurst(dur, vol=0.3){
-  if(!audioCtx) return;
-  const n = audioCtx.sampleRate*dur;
-  const buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
-  const src=audioCtx.createBufferSource(); src.buffer=buf;
-  const g=audioCtx.createGain(); g.gain.value=vol;
-  const f=audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1200;
-  src.connect(f); f.connect(g); g.connect(audioCtx.destination); src.start();
-}
-function playHit(){ tone(520,0.12,'square',0.18,200); tone(180,0.1,'sine',0.12); }
-function playGold(){ tone(880,0.1,'triangle',0.2); setTimeout(()=>tone(1320,0.18,'triangle',0.2),80); setTimeout(()=>tone(1760,0.22,'triangle',0.18),160); }
-function playBomb(){ noiseBurst(0.4,0.4); tone(80,0.4,'sawtooth',0.25,30); }
-function playPop(){ tone(300,0.08,'sine',0.1,500); }
-function playLevelClear(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.2,'triangle',0.2),i*120)); }
-function playCountdown(){ tone(440,0.15,'square',0.15); }
-function playGo(){ tone(880,0.3,'triangle',0.25,1320); }
-
-/* ============================================================
-   屏幕特效
-============================================================ */
-function flashScreen(type){
-  flashEl.className = type;
-  flashEl.style.opacity = type==='bomb'?0.85:0.6;
-  flashEl.style.transition='none';
-  requestAnimationFrame(()=>{
-    flashEl.style.transition='opacity .4s';
-    flashEl.style.opacity=0;
-  });
-}
-function shakeScreen(){
-  appEl.classList.remove('shake'); void appEl.offsetWidth; appEl.classList.add('shake');
-  setTimeout(()=>appEl.classList.remove('shake'),360);
-}
-function floatScore(px, py, text, color){
-  const el = document.createElement('div');
-  el.className='float-score';
-  el.textContent=text;
-  el.style.color=color;
-  el.style.left=px+'px'; el.style.top=py+'px';
-  appEl.appendChild(el);
-  setTimeout(()=>el.remove(),900);
-}
-
-/* ============================================================
-   烟花 (结算)
-============================================================ */
-const fwCtx = fwCanvas.getContext('2d');
-const fireworks = [];
-function resizeFw(){ fwCanvas.width=innerWidth; fwCanvas.height=innerHeight; }
-function launchFirework(x,y){
-  const colors=['#ff2e9a','#00f0ff','#ffe600','#aaff00','#ff7a1a','#b066ff'];
-  const color = colors[Math.floor(Math.random()*colors.length)];
-  const count = 60+Math.floor(Math.random()*30);
-  for(let i=0;i<count;i++){
-    const a = (Math.PI*2)*i/count + Math.random()*0.2;
-    const sp = 2+Math.random()*4;
-    fireworks.push({
-      x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
-      life:1+Math.random()*0.6, age:0, color,
-      size: 2+Math.random()*2
-    });
-  }
-}
-function updateFireworks(dt){
-  fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);
-  for(let i=fireworks.length-1;i>=0;i--){
-    const p=fireworks[i];
-    p.age+=dt;
-    p.vy+=0.08;
-    p.x+=p.vx; p.y+=p.vy;
-    p.vx*=0.99; p.vy*=0.99;
-    const a = Math.max(0, 1 - p.age/p.life);
-    fwCtx.globalAlpha=a;
-    fwCtx.fillStyle=p.color;
-    fwCtx.shadowBlur=12; fwCtx.shadowColor=p.color;
-    fwCtx.beginPath(); fwCtx.arc(p.x,p.y,p.size*a,0,Math.PI*2); fwCtx.fill();
-    if(a<=0) fireworks.splice(i,1);
-  }
-  fwCtx.globalAlpha=1; fwCtx.shadowBlur=0;
-}
-let fwLoopActive=false;
-function startFireworksShow(){
-  resizeFw();
-  fwCanvas.style.opacity=1;
-  fwLoopActive=true;
-  const launcher = ()=>{
-    if(!fwLoopActive) return;
-    launchFirework(innerWidth*(0.2+Math.random()*0.6), innerHeight*(0.2+Math.random()*0.4));
-    setTimeout(launcher, 500+Math.random()*600);
-  };
-  launcher();
-}
-function stopFireworksShow(){
-  fwLoopActive=false;
-  fwCanvas.style.opacity=0;
-  fireworks.length=0;
-  fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);
-}
-
-/* ============================================================
-   游戏流程
-============================================================ */
-function setMode(m){
-  State.mode = m;
-  $('mode-text').textContent = m==='gesture' ? '体感模式' : '鼠标模式';
-  document.querySelector('.hand-indicators').style.display = m==='gesture' ? 'flex':'none';
-}
-
-function startGame(){
-  State.levelIndex = 0;
-  State.totalScore = 0;
-  showLevelIntro();
-}
-
-function showLevelIntro(){
-  State.phase='levelIntro';
-  $('start-screen').classList.add('hidden');
-  $('settle-screen').classList.add('hidden');
-  const cfg = LEVELS[State.levelIndex];
-  $('lv-no').textContent = `LEVEL ${State.levelIndex+1}`;
-  $('lv-title').textContent = cfg.name;
-  $('lv-desc').textContent = cfg.desc;
-  $('lv-holes').textContent = cfg.holes;
-  $('lv-time').textContent = cfg.time+'s';
-  $('lv-target').textContent = cfg.target;
-  $('level-screen').classList.remove('hidden');
-}
-
-function beginLevel(){
-  $('level-screen').classList.add('hidden');
-  const cfg = LEVELS[State.levelIndex];
-  buildLevel(State.levelIndex);
-  State.score = 0;
-  State.combo = 0; State.multiplier = 1; State.maxCombo = 0; State.comboTimer = 0;
-  State.hits = 0; State.attempts = 0;
-  State.timeLeft = cfg.time;
-  State.levelStartScore = State.totalScore;
-  State.phase = 'playing';
-  hudEl.classList.remove('hidden');
-  updateHUD();
-  // 倒计时 3-2-1
-  countdownAnim(()=>{ State.running=true; ensureAudio(); });
-  // 生成调度
-  scheduleSpawn();
-}
-
-function countdownAnim(done){
-  const el = $('countdown');
-  const num = el.querySelector('.num');
-  el.classList.add('show');
-  let n=3;
-  const tick=()=>{
-    if(n>0){ num.textContent=n; num.style.animation='none'; void num.offsetWidth; num.style.animation=''; playCountdown(); n--; setTimeout(tick,900); }
-    else { num.textContent='GO!'; num.style.animation='none'; void num.offsetWidth; num.style.animation=''; playGo(); el.classList.remove('show'); setTimeout(done, 600); }
-  };
-  tick();
-}
-
-let spawnTimer=null;
-function scheduleSpawn(){
-  if(spawnTimer) clearTimeout(spawnTimer);
-  if(State.phase!=='playing') return;
-  const cfg = LEVELS[State.levelIndex];
-  spawnMole();
-  const delay = (cfg.spawnMin + Math.random()*(cfg.spawnMax-cfg.spawnMin))*1000;
-  spawnTimer = setTimeout(scheduleSpawn, delay);
-}
-
-function endLevel(){
-  State.running=false;
-  State.phase='settle';
-  if(spawnTimer){clearTimeout(spawnTimer); spawnTimer=null;}
-  clearMoles();
-  State.totalScore = State.levelStartScore + State.score;
-  showSettlement();
-}
-
-function showSettlement(){
-  const cfg = LEVELS[State.levelIndex];
-  const score = State.score;
-  const acc = State.attempts>0 ? Math.round(State.hits/State.attempts*100) : 0;
-  // 评级
-  const ratio = score / cfg.target;
-  let rating, stars, verdict;
-  if(ratio>=1.6){ rating='S'; stars='★★★'; verdict='完美无瑕！你是地鼠克星！'; }
-  else if(ratio>=1.2){ rating='A'; stars='★★★'; verdict='出色发挥，地鼠闻风丧胆！'; }
-  else if(ratio>=1.0){ rating='B'; stars='★★☆'; verdict='达标通过，再接再厉！'; }
-  else if(ratio>=0.7){ rating='C'; stars='★☆☆'; verdict='险险过关，继续磨练拳法。'; }
-  else { rating='D'; stars='☆☆☆'; verdict='地鼠们嘲笑了你，再来一次！'; }
-
-  $('st-no').textContent = State.levelIndex===LEVELS.length-1 ? 'FINAL RESULT' : `LEVEL ${State.levelIndex+1} CLEAR`;
-  $('st-rating').textContent = rating;
-  $('st-stars').textContent = stars;
-  $('st-score').textContent = score;
-  $('st-combo').textContent = State.maxCombo;
-  $('st-acc').textContent = acc+'%';
-  $('st-verdict').textContent = verdict;
-
-  const isLast = State.levelIndex >= LEVELS.length-1;
-  const passed = ratio>=1.0;
-  $('btn-next').textContent = isLast ? '查看总结' : '下一关';
-  $('btn-next').className = 'start-btn' + (isLast || !passed ? ' ghost':'');
-  $('btn-restart-all').classList.toggle('hidden', !(isLast || !passed));
-
-  $('settle-screen').classList.remove('hidden');
-  hudEl.classList.add('hidden');
-  // 烟花
-  startFireworksShow();
-  playLevelClear();
-  setTimeout(()=>stopFireworksShow(), 6000);
-}
-
-function nextLevel(){
-  stopFireworksShow();
-  const cfg = LEVELS[State.levelIndex];
-  const passed = State.score >= cfg.target;
-  if(!passed){
-    // 重玩本关
-    $('settle-screen').classList.add('hidden');
-    showLevelIntro();
-    return;
-  }
-  if(State.levelIndex >= LEVELS.length-1){
-    // 已通关，显示总结
-    showFinalSummary();
-    return;
-  }
-  State.levelIndex++;
-  $('settle-screen').classList.add('hidden');
-  showLevelIntro();
-}
-
-function showFinalSummary(){
-  $('st-no').textContent = 'GAME CLEAR';
-  $('st-rating').textContent = 'S';
-  $('st-stars').textContent = '★★★';
-  $('st-score').textContent = State.totalScore;
-  $('st-combo').textContent = State.maxCombo;
-  $('st-acc').textContent = '通关';
-  $('st-verdict').textContent = `恭喜征服地鼠王座！累计得分 ${State.totalScore}`;
-  $('btn-next').textContent = '再来一局';
-  $('btn-next').className = 'start-btn';
-  $('btn-restart-all').classList.add('hidden');
-  startFireworksShow();
-  setTimeout(()=>stopFireworksShow(), 8000);
-}
-
-function updateHUD(){
-  $('score').querySelector('.stat-value').textContent = State.score;
-  $('combo').querySelector('.stat-value').textContent = 'x'+State.multiplier.toFixed(1);
-  $('combo').querySelector('.combo-meter i').style.width = Math.min(100, State.combo*8)+'%';
-  $('level').querySelector('.stat-value').textContent = `${State.levelIndex+1} / ${LEVELS.length}`;
-  $('timer').querySelector('.stat-value').textContent = Math.ceil(State.timeLeft);
-  $('timer').classList.toggle('warn', State.timeLeft<=8);
-}
-
-/* ============================================================
-   主循环
-============================================================ */
-function animate(){
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  const now = performance.now();
-
-  // 洞口环呼吸
-  holes.forEach((h,i)=>{
-    const t = now*0.001 + i*0.7;
-    h.rim.material.emissiveIntensity = 1.0 + Math.sin(t*2)*0.5;
-  });
-
-  // 地鼠状态机
-  for(let i=activeMoles.length-1;i>=0;i--){
-    const m = activeMoles[i];
-    const age = now - m.born;
-    if(m.state==='rising'){
-      const p = Math.min(1, age/220);
-      m.group.position.y = -0.9 + (m.targetY+0.9)*easeOutBack(p);
-      m.group.scale.setScalar(0.6 + 0.4*p);
-      if(p>=1){ m.state='up'; playPop(); }
-    } else if(m.state==='up'){
-      // 微微浮动
-      m.group.position.y = m.targetY + Math.sin(age*0.012)*0.04;
-      if(m.type==='bomb' && m.group.userData.spark){
-        const s = 0.7+Math.random()*0.6;
-        m.group.userData.spark.scale.setScalar(s);
-        m.group.userData.sparkLight.intensity = 1.5+Math.random()*1.5;
-      }
-      if(age > m.life){ m.state='hiding'; if(!m.hit && m.type!=='bomb'){ /* 漏击重置连击 */ State.combo=0; State.multiplier=1; } }
-    } else if(m.state==='hiding'){
-      const p = Math.min(1, (now-(m.hideStart||(m.hideStart=now)))/180);
-      m.group.position.y = (m._hy||m.group.position.y) * (1-p) - 0.9*p;
-      if(m._hy===undefined) m._hy = m.group.position.y;
-      m.group.scale.setScalar((0.6+0.4*(m.state==='up'?1:1))*(1-p)+0.6*p*0);
-      m.group.scale.setScalar(Math.max(0.1, 1-p*0.7));
-      if(p>=1){
-        if(m.group.parent) m.group.parent.remove(m.group);
-        disposeGroup(m.group);
-        m.hole.mole=null;
-        activeMoles.splice(i,1);
-      }
-    }
-  }
-
-  // 连击衰减
-  if(State.running && State.comboTimer>0){
-    State.comboTimer -= dt;
-    if(State.comboTimer<=0){ State.combo=0; State.multiplier=1; updateHUD(); }
-  }
-
-  // 手部冷却
-  ['left','right'].forEach(s=>{ if(handState[s].cooldown>0) handState[s].cooldown-=dt; });
-
-  // 粒子
-  updateParticles(dt);
-
-  // 烟花
-  if(fwLoopActive) updateFireworks(dt);
-
-  // 倒计时
-  if(State.running){
-    State.timeLeft -= dt;
-    if(State.timeLeft<=0){ State.timeLeft=0; updateHUD(); endLevel(); }
-    else updateHUD();
-  }
-
-  renderer.render(scene, camera);
-}
-
-function easeOutBack(x){
-  const c1=1.70158, c3=c1+1;
-  return 1 + c3*Math.pow(x-1,3) + c1*Math.pow(x-1,2);
-}
-
-/* ============================================================
-   摄像头 / 模式初始化
-============================================================ */
-async function setupGestureMode(){
-  ensureAudio();
-  if(!videoEl){
-    videoEl = document.createElement('video');
-    videoEl.autoplay=true; videoEl.playsInline=true; videoEl.muted=true;
-  }
-  try{
-    if(typeof Hands==='undefined' || typeof Camera==='undefined'){
-      throw new Error('MediaPipe 手势库加载失败，请检查网络后刷新重试');
-    }
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      throw new Error('当前浏览器不支持摄像头 API，请使用 Chrome/Edge 等现代浏览器');
-    }
-    const timeoutPromise = new Promise((_, rej)=>setTimeout(()=>rej(new Error('摄像头请求超时，请检查权限设置')), 10000));
-    const stream = await Promise.race([
-      navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}, audio:false}),
-      timeoutPromise
-    ]);
-    videoEl.srcObject = stream;
-    await videoEl.play();
-    setBackgroundVideo(videoEl);
-    await initHands(videoEl);
-    return true;
-  }catch(e){
-    console.error(e);
-    showPermissionError(e);
-    return false;
-  }
-}
-
-function setupMouseMode(){
-  // 不使用摄像头背景，用渐变背景
-  scene.background = new THREE.Color(0x0a0612);
-  // 添加装饰网格地面
-  const grid = new THREE.GridHelper(20, 20, 0x00f0ff, 0x2a1840);
-  grid.material.transparent=true; grid.material.opacity=0.25;
-  grid.position.y = -0.01;
-  scene.add(grid);
-  // 远景渐变
-  const bgGeo = new THREE.PlaneGeometry(60,30);
-  const bgMat = new THREE.ShaderMaterial({
-    uniforms:{t:{value:0}},
-    vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`varying vec2 vUv;void main(){vec3 a=vec3(0.04,0.02,0.08);vec3 b=vec3(0.15,0.04,0.22);vec3 c=vec3(0.0,0.06,0.12);vec3 col=mix(a,b,vUv.y);col=mix(col,c,smoothstep(0.4,0.7,vUv.y));gl_FragColor=vec4(col,1.);}`,
-    depthWrite:false
-  });
-  const bg = new THREE.Mesh(bgGeo, bgMat); bg.position.set(0,3,-12); scene.add(bg);
-}
-
-function resetStartBtn(){
-  const btn = $('btn-start');
-  btn.disabled = false;
-  btn.textContent = '开始游戏';
-}
-function showPermissionError(e){
-  resetStartBtn();
-  const box = $('perm-error');
-  box.innerHTML = `<div class="err-box">摄像头启动失败：${e.message||e}<br/>请检查浏览器权限设置，或改用<strong>鼠标模式</strong>。可点击下方按钮重新尝试。</div>`;
-}
-
-/* ============================================================
-   鼠标模式交互
-============================================================ */
-threeCanvas.addEventListener('click', (e)=>{
-  if(State.phase!=='playing' || State.mode!=='mouse') return;
-  const nx = e.clientX/innerWidth;
-  const ny = e.clientY/innerHeight;
-  // 鼠标点击：单次命中
-  tryHitAt(nx, ny, 'mouse');
-  // 鼠标准星反馈
-  floatScore(e.clientX, e.clientY, '●', 'rgba(255,255,255,0.6)');
-});
-
-/* ============================================================
-   按钮事件
-============================================================ */
-let selectedMode = 'gesture';
-document.querySelectorAll('.mode-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('primary'));
-    btn.classList.add('primary');
-    selectedMode = btn.dataset.mode;
-    $('perm-error').innerHTML='';
-  });
-});
-
-$('btn-start').addEventListener('click', async ()=>{
-  ensureAudio();
-  $('btn-start').textContent = '准备中…';
-  $('btn-start').disabled = true;
-  $('perm-error').innerHTML='';
-  setMode(selectedMode);
-  if(selectedMode==='gesture'){
-    const ok = await setupGestureMode();
-    if(!ok){ return; }
-  } else {
-    setupMouseMode();
-    resetStartBtn();
-  }
-  $('start-screen').classList.add('hidden');
-  startGame();
-});
-
-$('btn-level-go').addEventListener('click', ()=>{ ensureAudio(); beginLevel(); });
-$('btn-next').addEventListener('click', ()=>{ ensureAudio(); nextLevel(); });
-$('btn-restart-all').addEventListener('click', ()=>{
-  stopFireworksShow();
-  $('settle-screen').classList.add('hidden');
-  State.levelIndex=0; State.totalScore=0;
-  startGame();
-});
-
-/* ============================================================
-   初始化
-============================================================ */
-function onResize(){
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  resizeHandCanvas(); resizeFw();
-}
-window.addEventListener('resize', onResize);
-
-initThree();
-resizeHandCanvas(); resizeFw();
-animate();
-
-// 隐藏 loader
-window.addEventListener('load', ()=>{
-  setTimeout(()=>$('loader').classList.add('hide'), 400);
-});
-</script>
+.trae-badge--bottom-right { bottom: 20px; right: 20px; }
+.trae-badge--bottom-left { bottom: 20px; left: 20px; }
+.trae-badge--top-right { top: 20px; right: 20px; }
+.trae-badge--top-left { top: 20px; left: 20px; }
+`;
+              const logos = {"light":"<svg width=\"92\" height=\"12\" viewBox=\"0 0 92 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<g clip-path=\"url(#clip0_5805_55291)\">\n<g clip-path=\"url(#clip1_5805_55291)\">\n<path d=\"M15.1579 11.2121H2.6478V9.12821H0.562988V0.787872H15.1579V11.2121ZM2.6478 9.12821H13.073V2.87269H2.6478V9.12821ZM7.86092 5.96865L6.38672 7.44275L4.91261 5.96865L6.38672 4.49445L7.86092 5.96865ZM12.0306 5.96775L10.5564 7.44185L9.08233 5.96775L10.5564 4.49355L12.0306 5.96775Z\" fill=\"white\"/>\n</g>\n<g clip-path=\"url(#clip2_5805_55291)\">\n<path d=\"M28.0793 3.37087H25.142V10.6863H23.143V3.37087H20.2048V1.5047H28.0793V3.37087ZM55.4369 3.36808H50.3789V8.81641H55.4369V10.6835H48.3789V1.50092H55.4369V3.36808ZM34.1761 1.50092C36.4528 1.50092 37.1355 2.26109 37.1355 4.43355C37.1355 6.00363 36.6872 6.72417 35.4243 7.14483L37.1466 10.6817H34.9474L33.3569 7.38095H31.2204L31.2222 10.6817V10.6826H29.2583V1.50092H34.1761ZM47.4897 10.6826H45.3993L44.5662 8.50363H40.8449L40.0819 10.6826H37.9048L41.4232 1.5047H44.081L47.4897 10.6826ZM55.436 6.119L53.8697 7.59311L52.3955 6.119L53.8697 4.6448L55.436 6.119ZM41.4547 6.86439H44.0173L42.8578 3.54429H42.5985L41.4547 6.86439ZM31.2222 5.60883H33.8948V5.60793C34.5636 5.60793 35.07 5.38284 35.0701 4.79156V4.14581C35.0701 3.55449 34.5636 3.32934 33.8948 3.32934H31.2222V5.60883Z\" fill=\"white\"/>\n</g>\n</g>\n<path d=\"M65.0407 4.17188C65.0009 3.79972 64.8333 3.50994 64.5379 3.30256C64.2453 3.09517 63.8646 2.99148 63.3958 2.99148C63.0663 2.99148 62.7836 3.04119 62.5478 3.14062C62.312 3.24006 62.1316 3.375 62.0066 3.54545C61.8816 3.71591 61.8177 3.91051 61.8149 4.12926C61.8149 4.31108 61.856 4.46875 61.9384 4.60227C62.0237 4.7358 62.1387 4.84943 62.2836 4.94318C62.4285 5.03409 62.589 5.1108 62.7651 5.1733C62.9413 5.2358 63.1188 5.28835 63.2978 5.33097L64.116 5.53551C64.4455 5.61222 64.7623 5.71591 65.0663 5.84659C65.3731 5.97727 65.6472 6.14205 65.8887 6.34091C66.133 6.53977 66.3262 6.77983 66.4683 7.06108C66.6103 7.34233 66.6813 7.67187 66.6813 8.04972C66.6813 8.56108 66.5506 9.01136 66.2893 9.40057C66.0279 9.78693 65.6501 10.0895 65.1558 10.3082C64.6643 10.5241 64.0691 10.6321 63.3703 10.6321C62.6913 10.6321 62.1018 10.527 61.6018 10.3168C61.1046 10.1065 60.7154 9.79972 60.4342 9.39631C60.1558 8.9929 60.0052 8.50142 59.9825 7.92188H61.5379C61.5606 8.22585 61.6543 8.47869 61.8191 8.6804C61.9839 8.8821 62.1984 9.03267 62.4626 9.1321C62.7296 9.23153 63.0279 9.28125 63.3575 9.28125C63.7012 9.28125 64.0024 9.23011 64.2609 9.12784C64.5222 9.02273 64.7268 8.87784 64.8745 8.69318C65.0222 8.50568 65.0975 8.28693 65.1004 8.03693C65.0975 7.80966 65.0308 7.62216 64.9001 7.47443C64.7694 7.32386 64.5862 7.19886 64.3504 7.09943C64.1174 6.99716 63.8447 6.90625 63.5322 6.8267L62.5393 6.57102C61.8205 6.38636 61.2524 6.10653 60.8347 5.73153C60.42 5.35369 60.2126 4.85227 60.2126 4.22727C60.2126 3.71307 60.3518 3.26278 60.6302 2.87642C60.9114 2.49006 61.2935 2.19034 61.7765 1.97727C62.2595 1.76136 62.8063 1.65341 63.4171 1.65341C64.0364 1.65341 64.5791 1.76136 65.045 1.97727C65.5137 2.19034 65.8816 2.48722 66.1487 2.8679C66.4157 3.24574 66.5535 3.6804 66.562 4.17188H65.0407ZM75.8891 6.13636C75.8891 7.0767 75.7129 7.8821 75.3607 8.55256C75.0112 9.22017 74.534 9.73153 73.9288 10.0866C73.3266 10.4418 72.6433 10.6193 71.8791 10.6193C71.1149 10.6193 70.4303 10.4418 69.8252 10.0866C69.2229 9.72869 68.7456 9.21591 68.3933 8.5483C68.0439 7.87784 67.8692 7.07386 67.8692 6.13636C67.8692 5.19602 68.0439 4.39205 68.3933 3.72443C68.7456 3.05398 69.2229 2.54119 69.8252 2.18608C70.4303 1.83097 71.1149 1.65341 71.8791 1.65341C72.6433 1.65341 73.3266 1.83097 73.9288 2.18608C74.534 2.54119 75.0112 3.05398 75.3607 3.72443C75.7129 4.39205 75.8891 5.19602 75.8891 6.13636ZM74.2996 6.13636C74.2996 5.47443 74.1959 4.91619 73.9885 4.46165C73.784 4.00426 73.4999 3.65909 73.1362 3.42614C72.7726 3.19034 72.3536 3.07244 71.8791 3.07244C71.4047 3.07244 70.9857 3.19034 70.622 3.42614C70.2584 3.65909 69.9729 4.00426 69.7655 4.46165C69.5609 4.91619 69.4587 5.47443 69.4587 6.13636C69.4587 6.7983 69.5609 7.35795 69.7655 7.81534C69.9729 8.26989 70.2584 8.61506 70.622 8.85085C70.9857 9.08381 71.4047 9.20028 71.8791 9.20028C72.3536 9.20028 72.7726 9.08381 73.1362 8.85085C73.4999 8.61506 73.784 8.26989 73.9885 7.81534C74.1959 7.35795 74.2996 6.7983 74.2996 6.13636ZM77.3837 10.5V1.77273H78.9647V9.17472H82.8085V10.5H77.3837ZM91.6391 6.13636C91.6391 7.0767 91.4629 7.8821 91.1107 8.55256C90.7612 9.22017 90.284 9.73153 89.6788 10.0866C89.0766 10.4418 88.3933 10.6193 87.6291 10.6193C86.8649 10.6193 86.1803 10.4418 85.5752 10.0866C84.9729 9.72869 84.4956 9.21591 84.1433 8.5483C83.7939 7.87784 83.6192 7.07386 83.6192 6.13636C83.6192 5.19602 83.7939 4.39205 84.1433 3.72443C84.4956 3.05398 84.9729 2.54119 85.5752 2.18608C86.1803 1.83097 86.8649 1.65341 87.6291 1.65341C88.3933 1.65341 89.0766 1.83097 89.6788 2.18608C90.284 2.54119 90.7612 3.05398 91.1107 3.72443C91.4629 4.39205 91.6391 5.19602 91.6391 6.13636ZM90.0496 6.13636C90.0496 5.47443 89.9459 4.91619 89.7385 4.46165C89.534 4.00426 89.2499 3.65909 88.8862 3.42614C88.5226 3.19034 88.1036 3.07244 87.6291 3.07244C87.1547 3.07244 86.7357 3.19034 86.372 3.42614C86.0084 3.65909 85.7229 4.00426 85.5155 4.46165C85.3109 4.91619 85.2087 5.47443 85.2087 6.13636C85.2087 6.7983 85.3109 7.35795 85.5155 7.81534C85.7229 8.26989 86.0084 8.61506 86.372 8.85085C86.7357 9.08381 87.1547 9.20028 87.6291 9.20028C88.1036 9.20028 88.5226 9.08381 88.8862 8.85085C89.2499 8.61506 89.534 8.26989 89.7385 7.81534C89.9459 7.35795 90.0496 6.7983 90.0496 6.13636Z\" fill=\"#32F08C\"/>\n<defs>\n<clipPath id=\"clip0_5805_55291\">\n<rect width=\"54.874\" height=\"10.4242\" fill=\"white\" transform=\"translate(0.562988 0.787872)\"/>\n</clipPath>\n<clipPath id=\"clip1_5805_55291\">\n<rect width=\"14.5949\" height=\"10.4242\" fill=\"white\" transform=\"translate(0.562988 0.787872)\"/>\n</clipPath>\n<clipPath id=\"clip2_5805_55291\">\n<rect width=\"35.2321\" height=\"9.18536\" fill=\"white\" transform=\"translate(20.2048 1.50092)\"/>\n</clipPath>\n</defs>\n</svg>","dark":"<svg width=\"92\" height=\"12\" viewBox=\"0 0 92 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<g clip-path=\"url(#clip0_5805_55291)\">\n<g clip-path=\"url(#clip1_5805_55291)\">\n<path d=\"M15.1579 11.2121H2.6478V9.12821H0.562988V0.787872H15.1579V11.2121ZM2.6478 9.12821H13.073V2.87269H2.6478V9.12821ZM7.86092 5.96865L6.38672 7.44275L4.91261 5.96865L6.38672 4.49445L7.86092 5.96865ZM12.0306 5.96775L10.5564 7.44185L9.08233 5.96775L10.5564 4.49355L12.0306 5.96775Z\" fill=\"black\"/>\n</g>\n<g clip-path=\"url(#clip2_5805_55291)\">\n<path d=\"M28.0793 3.37088H25.142V10.6863H23.143V3.37088H20.2048V1.50471H28.0793V3.37088ZM55.4369 3.36808H50.3789V8.81642H55.4369V10.6835H48.3789V1.50092H55.4369V3.36808ZM34.1761 1.50092C36.4528 1.50092 37.1355 2.2611 37.1355 4.43355C37.1355 6.00364 36.6872 6.72418 35.4243 7.14484L37.1466 10.6817H34.9474L33.3569 7.38096H31.2204L31.2222 10.6817V10.6826H29.2583V1.50092H34.1761ZM47.4897 10.6826H45.3993L44.5662 8.50363H40.8449L40.0819 10.6826H37.9048L41.4232 1.50471H44.081L47.4897 10.6826ZM55.436 6.11901L53.8697 7.59312L52.3955 6.11901L53.8697 4.64481L55.436 6.11901ZM41.4547 6.8644H44.0173L42.8578 3.5443H42.5985L41.4547 6.8644ZM31.2222 5.60884H33.8948V5.60794C34.5636 5.60793 35.07 5.38285 35.0701 4.79156V4.14581C35.0701 3.5545 34.5636 3.32935 33.8948 3.32935H31.2222V5.60884Z\" fill=\"black\"/>\n</g>\n</g>\n<path d=\"M65.0407 4.17188C65.0009 3.79972 64.8333 3.50994 64.5379 3.30256C64.2453 3.09517 63.8646 2.99148 63.3958 2.99148C63.0663 2.99148 62.7836 3.04119 62.5478 3.14062C62.312 3.24006 62.1316 3.375 62.0066 3.54545C61.8816 3.71591 61.8177 3.91051 61.8149 4.12926C61.8149 4.31108 61.856 4.46875 61.9384 4.60227C62.0237 4.7358 62.1387 4.84943 62.2836 4.94318C62.4285 5.03409 62.589 5.1108 62.7651 5.1733C62.9413 5.2358 63.1188 5.28835 63.2978 5.33097L64.116 5.53551C64.4455 5.61222 64.7623 5.71591 65.0663 5.84659C65.3731 5.97727 65.6472 6.14205 65.8887 6.34091C66.133 6.53977 66.3262 6.77983 66.4683 7.06108C66.6103 7.34233 66.6813 7.67187 66.6813 8.04972C66.6813 8.56108 66.5506 9.01136 66.2893 9.40057C66.0279 9.78693 65.6501 10.0895 65.1558 10.3082C64.6643 10.5241 64.0691 10.6321 63.3703 10.6321C62.6913 10.6321 62.1018 10.527 61.6018 10.3168C61.1046 10.1065 60.7154 9.79972 60.4342 9.39631C60.1558 8.9929 60.0052 8.50142 59.9825 7.92188H61.5379C61.5606 8.22585 61.6543 8.47869 61.8191 8.6804C61.9839 8.8821 62.1984 9.03267 62.4626 9.1321C62.7296 9.23153 63.0279 9.28125 63.3575 9.28125C63.7012 9.28125 64.0024 9.23011 64.2609 9.12784C64.5222 9.02273 64.7268 8.87784 64.8745 8.69318C65.0222 8.50568 65.0975 8.28693 65.1004 8.03693C65.0975 7.80966 65.0308 7.62216 64.9001 7.47443C64.7694 7.32386 64.5862 7.19886 64.3504 7.09943C64.1174 6.99716 63.8447 6.90625 63.5322 6.8267L62.5393 6.57102C61.8205 6.38636 61.2524 6.10653 60.8347 5.73153C60.42 5.35369 60.2126 4.85227 60.2126 4.22727C60.2126 3.71307 60.3518 3.26278 60.6302 2.87642C60.9114 2.49006 61.2935 2.19034 61.7765 1.97727C62.2595 1.76136 62.8063 1.65341 63.4171 1.65341C64.0364 1.65341 64.5791 1.76136 65.045 1.97727C65.5137 2.19034 65.8816 2.48722 66.1487 2.8679C66.4157 3.24574 66.5535 3.6804 66.562 4.17188H65.0407ZM75.8891 6.13636C75.8891 7.0767 75.7129 7.8821 75.3607 8.55256C75.0112 9.22017 74.534 9.73153 73.9288 10.0866C73.3266 10.4418 72.6433 10.6193 71.8791 10.6193C71.1149 10.6193 70.4303 10.4418 69.8252 10.0866C69.2229 9.72869 68.7456 9.21591 68.3933 8.5483C68.0439 7.87784 67.8692 7.07386 67.8692 6.13636C67.8692 5.19602 68.0439 4.39205 68.3933 3.72443C68.7456 3.05398 69.2229 2.54119 69.8252 2.18608C70.4303 1.83097 71.1149 1.65341 71.8791 1.65341C72.6433 1.65341 73.3266 1.83097 73.9288 2.18608C74.534 2.54119 75.0112 3.05398 75.3607 3.72443C75.7129 4.39205 75.8891 5.19602 75.8891 6.13636ZM74.2996 6.13636C74.2996 5.47443 74.1959 4.91619 73.9885 4.46165C73.784 4.00426 73.4999 3.65909 73.1362 3.42614C72.7726 3.19034 72.3536 3.07244 71.8791 3.07244C71.4047 3.07244 70.9857 3.19034 70.622 3.42614C70.2584 3.65909 69.9729 4.00426 69.7655 4.46165C69.5609 4.91619 69.4587 5.47443 69.4587 6.13636C69.4587 6.7983 69.5609 7.35795 69.7655 7.81534C69.9729 8.26989 70.2584 8.61506 70.622 8.85085C70.9857 9.08381 71.4047 9.20028 71.8791 9.20028C72.3536 9.20028 72.7726 9.08381 73.1362 8.85085C73.4999 8.61506 73.784 8.26989 73.9885 7.81534C74.1959 7.35795 74.2996 6.7983 74.2996 6.13636ZM77.3837 10.5V1.77273H78.9647V9.17472H82.8085V10.5H77.3837ZM91.6391 6.13636C91.6391 7.0767 91.4629 7.8821 91.1107 8.55256C90.7612 9.22017 90.284 9.73153 89.6788 10.0866C89.0766 10.4418 88.3933 10.6193 87.6291 10.6193C86.8649 10.6193 86.1803 10.4418 85.5752 10.0866C84.9729 9.72869 84.4956 9.21591 84.1433 8.5483C83.7939 7.87784 83.6192 7.07386 83.6192 6.13636C83.6192 5.19602 83.7939 4.39205 84.1433 3.72443C84.4956 3.05398 84.9729 2.54119 85.5752 2.18608C86.1803 1.83097 86.8649 1.65341 87.6291 1.65341C88.3933 1.65341 89.0766 1.83097 89.6788 2.18608C90.284 2.54119 90.7612 3.05398 91.1107 3.72443C91.4629 4.39205 91.6391 5.19602 91.6391 6.13636ZM90.0496 6.13636C90.0496 5.47443 89.9459 4.91619 89.7385 4.46165C89.534 4.00426 89.2499 3.65909 88.8862 3.42614C88.5226 3.19034 88.1036 3.07244 87.6291 3.07244C87.1547 3.07244 86.7357 3.19034 86.372 3.42614C86.0084 3.65909 85.7229 4.00426 85.5155 4.46165C85.3109 4.91619 85.2087 5.47443 85.2087 6.13636C85.2087 6.7983 85.3109 7.35795 85.5155 7.81534C85.7229 8.26989 86.0084 8.61506 86.372 8.85085C86.7357 9.08381 87.1547 9.20028 87.6291 9.20028C88.1036 9.20028 88.5226 9.08381 88.8862 8.85085C89.2499 8.61506 89.534 8.26989 89.7385 7.81534C89.9459 7.35795 90.0496 6.7983 90.0496 6.13636Z\" fill=\"#0AB861\"/>\n<defs>\n<clipPath id=\"clip0_5805_55291\">\n<rect width=\"54.874\" height=\"10.4242\" fill=\"white\" transform=\"translate(0.562988 0.787872)\"/>\n</clipPath>\n<clipPath id=\"clip1_5805_55291\">\n<rect width=\"14.5949\" height=\"10.4242\" fill=\"white\" transform=\"translate(0.562988 0.787872)\"/>\n</clipPath>\n<clipPath id=\"clip2_5805_55291\">\n<rect width=\"35.2321\" height=\"9.18536\" fill=\"white\" transform=\"translate(20.2048 1.50092)\"/>\n</clipPath>\n</defs>\n</svg>"};
+              const cancelDark = `<svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_5993_243)">
+<path d="M0.437012 7.5C0.437012 3.35786 3.79488 0 7.93701 0C12.0791 0 15.437 3.35786 15.437 7.5C15.437 11.6421 12.0791 15 7.93701 15C3.79488 15 0.437012 11.6421 0.437012 7.5Z" fill="#EDEFF2"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7.93698 1.34036C11.3391 1.34036 14.0966 4.09792 14.0966 7.5C14.0966 10.9021 11.3391 13.6596 7.93698 13.6596C4.53491 13.6596 1.77734 10.9021 1.77734 7.5C1.77734 4.09792 4.53491 1.34036 7.93698 1.34036Z" fill="#111214"/>
+<path d="M7.93717 6.70886L9.40826 5.23776L9.80383 4.84128L10.5959 5.63334L10.1994 6.02891L8.72831 7.5L10.1994 8.9711L10.5959 9.36667L9.80383 10.1587L9.40826 9.76224L7.93717 8.29115L6.46607 9.76224L6.0705 10.1587L5.27844 9.36667L5.67493 8.9711L7.14602 7.5L5.67493 6.02891L5.27844 5.63334L6.0705 4.84128L6.46607 5.23776L7.93717 6.70886Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_5993_243">
+<path d="M0.437012 7.5C0.437012 3.35786 3.79488 0 7.93701 0C12.0791 0 15.437 3.35786 15.437 7.5C15.437 11.6421 12.0791 15 7.93701 15C3.79488 15 0.437012 11.6421 0.437012 7.5Z" fill="white"/>
+</clipPath>
+</defs>
+</svg>`;
+              const cancelLight = `<svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_5993_279)">
+<path d="M0.437012 7.5C0.437012 3.35786 3.79488 0 7.93701 0C12.0791 0 15.437 3.35786 15.437 7.5C15.437 11.6421 12.0791 15 7.93701 15C3.79488 15 0.437012 11.6421 0.437012 7.5Z" fill="#2A2D31"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7.93698 1.34036C11.3391 1.34036 14.0966 4.09792 14.0966 7.5C14.0966 10.9021 11.3391 13.6596 7.93698 13.6596C4.53491 13.6596 1.77734 10.9021 1.77734 7.5C1.77734 4.09792 4.53491 1.34036 7.93698 1.34036Z" fill="white"/>
+<path d="M7.93717 6.70886L9.40826 5.23776L9.80383 4.84128L10.5959 5.63334L10.1994 6.02891L8.72831 7.5L10.1994 8.9711L10.5959 9.36667L9.80383 10.1587L9.40826 9.76224L7.93717 8.29115L6.46607 9.76224L6.0705 10.1587L5.27844 9.36667L5.67493 8.9711L7.14602 7.5L5.67493 6.02891L5.27844 5.63334L6.0705 4.84128L6.46607 5.23776L7.93717 6.70886Z" fill="black"/>
+</g>
+<defs>
+<clipPath id="clip0_5993_279">
+<path d="M0.437012 7.5C0.437012 3.35786 3.79488 0 7.93701 0C12.0791 0 15.437 3.35786 15.437 7.5C15.437 11.6421 12.0791 15 7.93701 15C3.79488 15 0.437012 11.6421 0.437012 7.5Z" fill="white"/>
+</clipPath>
+</defs>
+</svg>`;
+              const shareIcon = `<svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5.68693 2.33333H2.77026V11.6667H12.1036V8.75M8.6036 2.33333H12.1036V5.83333M6.8536 7.58333L11.5203 2.91666" 
+        stroke="currentColor" stroke-width="1.05" stroke-linecap="square"/>
+</svg>`;
+              
+              
+          // 主题选择函数 (复用自 theme.ts)
+          function getLuminance(r, g, b) {
+            return 0.299 * r + 0.587 * g + 0.114 * b;
+          }
+          
+          function parseColor(color) {
+            const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+            if (rgbaMatch) {
+              return [parseInt(rgbaMatch[1]), parseInt(rgbaMatch[2]), parseInt(rgbaMatch[3])];
+            }
+            
+            const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
+            if (hexMatch) {
+              const hex = hexMatch[1];
+              return [
+                parseInt(hex.substr(0, 2), 16),
+                parseInt(hex.substr(2, 2), 16),
+                parseInt(hex.substr(4, 2), 16)
+              ];
+            }
+            
+            const hexShortMatch = color.match(/^#([0-9a-f]{3})$/i);
+            if (hexShortMatch) {
+              const hex = hexShortMatch[1];
+              return [
+                parseInt(hex[0] + hex[0], 16),
+                parseInt(hex[1] + hex[1], 16),
+                parseInt(hex[2] + hex[2], 16)
+              ];
+            }
+            
+            return null;
+          }
+          
+          function detectBackgroundColor(element) {
+            let targetElement;
+            
+            if (typeof element === 'string') {
+              const found = document.querySelector(element);
+              console.debug('Target element found:', found);
+              if (!found) return 'rgb(255, 255, 255)';
+              targetElement = found;
+            } else if (element) {
+              targetElement = element;
+            } else {
+              targetElement = document.body;
+            }
+            
+            let currentElement = targetElement;
+            
+            while (currentElement && currentElement !== document.documentElement) {
+              const computedStyle = window.getComputedStyle(currentElement);
+              const backgroundColor = computedStyle.backgroundColor;
+              
+              console.debug('Checking element:', currentElement.tagName, currentElement.id, currentElement.className);
+              console.debug('Background color:', backgroundColor);
+              
+              if (backgroundColor && backgroundColor !== 'rgba(0, 0, 0, 0)' && backgroundColor !== 'transparent') {
+                console.debug('Found background color:', backgroundColor, 'on element:', currentElement);
+                return backgroundColor;
+              }
+              
+              currentElement = currentElement.parentElement;
+            }
+            
+            const bodyStyle = window.getComputedStyle(document.body);
+            const bodyBackground = bodyStyle.backgroundColor;
+            console.debug('Body background:', bodyBackground);
+            if (bodyBackground && bodyBackground !== 'rgba(0, 0, 0, 0)' && bodyBackground !== 'transparent') {
+              return bodyBackground;
+            }
+            
+            const htmlStyle = window.getComputedStyle(document.documentElement);
+            const htmlBackground = htmlStyle.backgroundColor;
+            console.debug('HTML background:', htmlBackground);
+            if (htmlBackground && htmlBackground !== 'rgba(0, 0, 0, 0)' && htmlBackground !== 'transparent') {
+              return htmlBackground;
+            }
+            
+            console.debug('No background found, returning default white');
+            return 'rgb(255, 255, 255)';
+          }
+          
+          function autoSelectTheme(container) {
+            const backgroundColor = detectBackgroundColor(container);
+            const rgb = parseColor(backgroundColor);
+            
+            console.debug('TRAE Badge Plugin - Background detection:', {
+              container,
+              backgroundColor,
+              rgb
+            });
+            
+            if (!rgb) {
+              console.debug('TRAE Badge Plugin - No RGB found, using dark theme');
+              return 'dark';
+            }
+            
+            const [r, g, b] = rgb;
+            const luminance = getLuminance(r, g, b);
+            const selectedTheme = luminance > 128 ? 'dark' : 'light';
+            
+            console.debug('TRAE Badge Plugin - Theme selection:', {
+              luminance,
+              selectedTheme,
+              reason: luminance > 128 ? 'Light background -> Dark badge' : 'Dark background -> Light badge'
+            });
+            
+            return selectedTheme;
+          }
+        
+              
+              // 注入样式
+              const style = document.createElement('style');
+              style.id = 'trae-badge-plugin-styles';
+              style.textContent = css;
+              document.head.appendChild(style);
+              
+              // 创建 Badge 函数
+              function createBadge() {
+                // 移除已存在的 badge
+                const existingBadge = document.getElementById('trae-badge-plugin');
+                if (existingBadge) {
+                  existingBadge.remove();
+                }
+                
+                // 确定主题
+                let variant = 'dark';
+                if (true) {
+                  variant = autoSelectTheme('#root');
+                }
+                
+                const isDarkBackground = variant === 'dark';
+                const logoType = isDarkBackground ? 'light' : 'dark';
+                const cancelIcon = isDarkBackground ? cancelLight : cancelDark;
+                
+                const badge = document.createElement('div');
+                badge.id = 'trae-badge-plugin';
+                badge.className = `trae-badge trae-badge--${variant} trae-badge--bottom-right`;
+                badge.innerHTML = `
+                  <div class="trae-badge-content">
+                    <div class="trae-badge-logo">${logos[logoType]}</div>
+                    <div class="trae-badge-share">${shareIcon}</div>
+                  </div>
+                  <div class="trae-badge-cancel">${cancelIcon}</div>
+                `;
+                
+                // 添加点击事件
+                
+                badge.style.cursor = 'pointer';
+                badge.addEventListener('click', (e) => {
+                  if (e.target.closest('.trae-badge-cancel')) return;
+                  window.open('https://www.trae.ai/solo?showJoin=1', '_blank');
+                });
+                
+                
+                // 添加取消按钮事件
+                const cancelButton = badge.querySelector('.trae-badge-cancel');
+                if (cancelButton) {
+                  cancelButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    badge.remove();
+                  });
+                }
+                
+                document.body.appendChild(badge);
+                return badge;
+              }
+              
+              // 初始创建 badge
+              // 等待 React 组件渲染完成后再创建 badge
+              function initBadge() {
+                // 使用 requestAnimationFrame 等待渲染完成
+                requestAnimationFrame(() => {
+                  // 再次检查目标元素是否存在
+                  const targetElement = document.querySelector('#root');
+                  if (targetElement) {
+                    const badge = createBadge();
+                  } else {
+                    // 如果还没有找到，等待一段时间再试
+                    setTimeout(() => {
+                      const badge = createBadge();
+                    }, 500);
+                  }
+                });
+              }
+              
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initBadge);
+              } else {
+                // DOM 已经加载完成，但 React 可能还没渲染
+                initBadge();
+              }
+              
+              window.TraeBadgePlugin = { 
+                destroy: () => {
+                  const badge = document.getElementById('trae-badge-plugin');
+                  if (badge) badge.remove();
+                  style.remove();
+                  delete window.TraeBadgePlugin;
+                },
+                recreate: createBadge
+              };
+            })();
+          </script>
+        
 </body>
 </html>
